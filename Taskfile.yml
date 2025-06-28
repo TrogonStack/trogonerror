@@ -1,0 +1,89 @@
+version: "3"
+
+tasks:
+  default:
+    desc: Run fmt, vet, lint, and test
+    deps: [fmt, vet, lint, test]
+
+  help:
+    desc: Show available tasks
+    cmds:
+      - task --list
+
+  test:
+    desc: Run all tests
+    cmds:
+      - echo "Running tests..."
+      - go test ./...
+
+  test-verbose:
+    desc: Run tests with verbose output
+    cmds:
+      - echo "Running tests with verbose output..."
+      - go test -v ./...
+
+  test-coverage:
+    desc: Run tests and show coverage percentage
+    cmds:
+      - echo "Running tests with coverage..."
+      - go test -cover ./...
+
+  test-coverage-html:
+    desc: Run tests and generate HTML coverage report
+    deps: [clean]
+    cmds:
+      - echo "Running tests and generating HTML coverage report..."
+      - go test -coverprofile=coverage.out -covermode=count ./...
+      - go tool cover -html=coverage.out -o coverage.html
+      - echo "Coverage report generated at coverage.html"
+      - echo "Open coverage.html in your browser to view the report"
+
+  fmt:
+    desc: Format code with gofmt
+    cmds:
+      - echo "Formatting code..."
+      - go fmt ./...
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - echo "Running go vet..."
+      - go vet ./...
+
+  lint:
+    desc: Run golangci-lint (if available)
+    cmds:
+      - echo "Running linter..."
+      - |
+        if command -v golangci-lint >/dev/null 2>&1; then
+          golangci-lint run
+        else
+          echo "golangci-lint not found, skipping lint check"
+          echo "Install with: go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest"
+        fi
+
+  build:
+    desc: Build the package
+    cmds:
+      - echo "Building package..."
+      - go build ./...
+
+  clean:
+    desc: Clean coverage files and test cache
+    cmds:
+      - echo "Cleaning up..."
+      - rm -f coverage.out coverage.html
+      - go clean -testcache
+      - echo "Clean complete"
+
+  dev-test:
+    desc: Development workflow - fmt, vet, and generate coverage HTML
+    deps: [fmt, vet, test-coverage-html]
+    cmds:
+      - echo "Development test complete - check coverage.html"
+
+  ci-test:
+    desc: CI workflow - fmt, vet, and test with coverage
+    deps: [fmt, vet, test-coverage]
+    cmds:
+      - echo "CI test complete"
