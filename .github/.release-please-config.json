@@ -5,6 +5,7 @@
   "include-component-in-tag": true,
   "separate-pull-requests": true,
   "tag-separator": "@",
+  "signoff": "Straw Hat, LLC <opensource@straw-hat-llc.com>",
   "changelog-sections": [
     {
       "type": "feat",
