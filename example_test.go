@@ -9,7 +9,7 @@ import (
 
 func ExampleNewError() {
 	err := trogonerror.NewError("shopify.users", "NOT_FOUND",
-		trogonerror.WithCode(trogonerror.NotFound),
+		trogonerror.WithCode(trogonerror.CodeNotFound),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "userId", "gid://shopify/Customer/1234567890"))
 
 	fmt.Println(err.Error())
@@ -30,7 +30,7 @@ func ExampleNewError() {
 
 func ExampleErrorTemplate() {
 	template := trogonerror.NewErrorTemplate("shopify.users", "NOT_FOUND",
-		trogonerror.TemplateWithCode(trogonerror.NotFound))
+		trogonerror.TemplateWithCode(trogonerror.CodeNotFound))
 
 	err := template.NewError(
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "userId", "gid://shopify/Customer/1234567890"))
@@ -53,11 +53,11 @@ func ExampleErrorTemplate() {
 
 func ExampleWithCause() {
 	dbErr := trogonerror.NewError("shopify.database", "CONNECTION_FAILED",
-		trogonerror.WithCode(trogonerror.Internal),
+		trogonerror.WithCode(trogonerror.CodeInternal),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "host", "postgres-primary.shopify.com"))
 
 	serviceErr := trogonerror.NewError("shopify.users", "USER_FETCH_FAILED",
-		trogonerror.WithCode(trogonerror.Internal),
+		trogonerror.WithCode(trogonerror.CodeInternal),
 		trogonerror.WithMessage("Failed to fetch user data"),
 		trogonerror.WithCause(dbErr))
 
@@ -75,7 +75,7 @@ func ExampleWithCause() {
 }
 
 func ExampleCode_methods() {
-	code := trogonerror.NotFound
+	code := trogonerror.CodeNotFound
 
 	fmt.Println(code.String())
 	fmt.Println(code.HttpStatusCode())
@@ -86,7 +86,7 @@ func ExampleCode_methods() {
 
 func ExampleNewError_basic() {
 	err := trogonerror.NewError("shopify.users", "NOT_FOUND",
-		trogonerror.WithCode(trogonerror.NotFound),
+		trogonerror.WithCode(trogonerror.CodeNotFound),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "userId", "gid://shopify/Customer/1234567890"))
 
 	fmt.Println("Error message:", err.Error())
@@ -111,11 +111,11 @@ func ExampleNewError_basic() {
 func ExampleErrorTemplate_production() {
 	var (
 		ErrUserNotFound = trogonerror.NewErrorTemplate("shopify.users", "NOT_FOUND",
-			trogonerror.TemplateWithCode(trogonerror.NotFound),
-			trogonerror.TemplateWithCode(trogonerror.NotFound))
+			trogonerror.TemplateWithCode(trogonerror.CodeNotFound),
+			trogonerror.TemplateWithCode(trogonerror.CodeNotFound))
 
 		ErrInvalidInput = trogonerror.NewErrorTemplate("shopify.validation", "INVALID_INPUT",
-			trogonerror.TemplateWithCode(trogonerror.InvalidArgument))
+			trogonerror.TemplateWithCode(trogonerror.CodeInvalidArgument))
 	)
 
 	userErr := ErrUserNotFound.NewError(
@@ -135,7 +135,7 @@ func ExampleErrorTemplate_production() {
 
 func ExampleNewError_richMetadata() {
 	err := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
-		trogonerror.WithCode(trogonerror.Internal),
+		trogonerror.WithCode(trogonerror.CodeInternal),
 		trogonerror.WithMessage("Payment processing failed due to upstream service error"),
 		trogonerror.WithVisibility(trogonerror.VisibilityPrivate),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPrivate, "paymentId", "pay_2024_01_15_abc123def456"),
@@ -159,7 +159,7 @@ func ExampleNewError_richMetadata() {
 func ExampleWithStackTrace_debugging() {
 	// Error with stack trace for debugging
 	err := trogonerror.NewError("shopify.database", "QUERY_TIMEOUT",
-		trogonerror.WithCode(trogonerror.Internal),
+		trogonerror.WithCode(trogonerror.CodeInternal),
 		trogonerror.WithStackTrace(),
 		trogonerror.WithDebugDetail("Database query failed with timeout"),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityInternal, "query", "SELECT * FROM customers WHERE id = $1"),
@@ -180,13 +180,13 @@ func ExampleWithStackTrace_debugging() {
 
 func ExampleWithCause_errorChaining() {
 	dbErr := trogonerror.NewError("shopify.database", "CONNECTION_FAILED",
-		trogonerror.WithCode(trogonerror.Unavailable),
+		trogonerror.WithCode(trogonerror.CodeUnavailable),
 		trogonerror.WithMessage("Database connection timeout"),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPrivate, "host", "postgres-primary.shopify.com"),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPrivate, "port", "5432"))
 
 	serviceErr := trogonerror.NewError("shopify.users", "USER_FETCH_FAILED",
-		trogonerror.WithCode(trogonerror.Internal),
+		trogonerror.WithCode(trogonerror.CodeInternal),
 		trogonerror.WithMessage("Failed to fetch user data"),
 		trogonerror.WithCause(dbErr))
 
@@ -207,7 +207,7 @@ func ExampleWithCause_errorChaining() {
 func ExampleWithRetryInfoDuration_retryLogic() {
 	// Error with retry information for rate limiting
 	err := trogonerror.NewError("shopify.api", "RATE_LIMIT_EXCEEDED",
-		trogonerror.WithCode(trogonerror.ResourceExhausted),
+		trogonerror.WithCode(trogonerror.CodeResourceExhausted),
 		trogonerror.WithMessage("API rate limit exceeded"),
 		trogonerror.WithRetryInfoDuration(60*time.Second),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "limit", "100"),
@@ -232,7 +232,7 @@ func ExampleWithRetryTime_absoluteRetry() {
 	retryTime := time.Date(2024, 1, 15, 14, 35, 0, 0, time.UTC)
 
 	err := trogonerror.NewError("shopify.maintenance", "SERVICE_UNAVAILABLE",
-		trogonerror.WithCode(trogonerror.Unavailable),
+		trogonerror.WithCode(trogonerror.CodeUnavailable),
 		trogonerror.WithMessage("Service temporarily unavailable for maintenance"),
 		trogonerror.WithRetryTime(retryTime),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "maintenanceWindow", "30min"))
@@ -252,7 +252,7 @@ func ExampleWithRetryTime_absoluteRetry() {
 func ExampleWithHelpLink_documentation() {
 	// Error with help links for user guidance
 	err := trogonerror.NewError("shopify.users", "INVALID_EMAIL",
-		trogonerror.WithCode(trogonerror.InvalidArgument),
+		trogonerror.WithCode(trogonerror.CodeInvalidArgument),
 		trogonerror.WithMessage("Email address format is invalid"),
 		trogonerror.WithSubject("/email"),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "fieldName", "email"),
@@ -275,7 +275,7 @@ func ExampleWithHelpLink_documentation() {
 
 func ExampleWithLocalizedMessage_internationalization() {
 	err := trogonerror.NewError("shopify.users", "NOT_FOUND",
-		trogonerror.WithCode(trogonerror.NotFound),
+		trogonerror.WithCode(trogonerror.CodeNotFound),
 		trogonerror.WithLocalizedMessage("es-ES", "Usuario no encontrado"),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "userId", "gid://shopify/Customer/7890123456"))
 
@@ -291,14 +291,14 @@ func ExampleWithLocalizedMessage_internationalization() {
 
 func ExampleCode_utilities() {
 	// Working with error codes
-	code := trogonerror.NotFound
+	code := trogonerror.CodeNotFound
 
 	fmt.Printf("Code string: %s\n", code.String())
 	fmt.Printf("HTTP status: %d\n", code.HttpStatusCode())
 	fmt.Printf("Default message: %s\n", code.Message())
 
-	err := trogonerror.NewError("shopify.core", "INVALID_REQUEST", trogonerror.WithCode(trogonerror.InvalidArgument))
-	if err.Code() == trogonerror.InvalidArgument {
+	err := trogonerror.NewError("shopify.core", "INVALID_REQUEST", trogonerror.WithCode(trogonerror.CodeInvalidArgument))
+	if err.Code() == trogonerror.CodeInvalidArgument {
 		fmt.Println("This is an invalid argument error")
 	}
 
@@ -313,7 +313,7 @@ func ExampleWithWrap_standardErrors() {
 	originalErr := fmt.Errorf("connection timeout after 30s")
 
 	wrappedErr := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT",
-		trogonerror.WithCode(trogonerror.Unavailable),
+		trogonerror.WithCode(trogonerror.CodeUnavailable),
 		trogonerror.WithWrap(originalErr),
 		trogonerror.WithErrorMessage(originalErr),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPrivate, "timeout", "30s"),
@@ -332,7 +332,7 @@ func ExampleWithWrap_standardErrors() {
 func ExampleTrogonError_visibilityControl() {
 	// Demonstrate visibility controls
 	err := trogonerror.NewError("shopify.auth", "ACCESS_DENIED",
-		trogonerror.WithCode(trogonerror.PermissionDenied),
+		trogonerror.WithCode(trogonerror.CodePermissionDenied),
 		trogonerror.WithVisibility(trogonerror.VisibilityPublic),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityInternal, "userId", "gid://shopify/Customer/1234567890"),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPrivate, "resource", "/admin/customers"),
@@ -360,9 +360,9 @@ func ExampleWithMetadataValuef_formattedValues() {
 	userID := "1234567890"
 	orderID := "5432109876"
 	amount := 29999 // cents
-	
+
 	err := trogonerror.NewError("shopify.orders", "ORDER_PROCESSING_FAILED",
-		trogonerror.WithCode(trogonerror.Internal),
+		trogonerror.WithCode(trogonerror.CodeInternal),
 		trogonerror.WithMetadataValuef(trogonerror.VisibilityPublic, "customerId", "gid://shopify/Customer/%s", userID),
 		trogonerror.WithMetadataValuef(trogonerror.VisibilityPublic, "orderId", "gid://shopify/Order/%s", orderID),
 		trogonerror.WithMetadataValuef(trogonerror.VisibilityPublic, "amount", "$%.2f", float64(amount)/100),

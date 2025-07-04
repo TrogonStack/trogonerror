@@ -12,27 +12,27 @@ import (
 
 func TestErrorTemplate_Basic(t *testing.T) {
 	template := trogonerror.NewErrorTemplate("shopify.users", "NOT_FOUND",
-		trogonerror.TemplateWithCode(trogonerror.NotFound),
+		trogonerror.TemplateWithCode(trogonerror.CodeNotFound),
 		trogonerror.TemplateWithVisibility(trogonerror.VisibilityPublic))
 
 	err := template.NewError()
 	assert.Equal(t, "shopify.users", err.Domain())
 	assert.Equal(t, "NOT_FOUND", err.Reason())
-	assert.Equal(t, trogonerror.NotFound, err.Code())
+	assert.Equal(t, trogonerror.CodeNotFound, err.Code())
 	assert.Equal(t, "resource not found", err.Message())
 	assert.Equal(t, trogonerror.VisibilityPublic, err.Visibility())
 }
 
 func TestErrorTemplate_CreateInstances(t *testing.T) {
 	template := trogonerror.NewErrorTemplate("shopify.users", "NOT_FOUND",
-		trogonerror.TemplateWithCode(trogonerror.NotFound))
+		trogonerror.TemplateWithCode(trogonerror.CodeNotFound))
 	err1 := template.NewError(trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "userId", "gid://shopify/Customer/1234567890"))
 	err2 := template.NewError(
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "userId", "gid://shopify/Customer/4567890123"),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "userId", "gid://shopify/Customer/4567890123"))
 
 	assert.Equal(t, "shopify.users", err1.Domain())
-	assert.Equal(t, trogonerror.NotFound, err1.Code())
+	assert.Equal(t, trogonerror.CodeNotFound, err1.Code())
 	assert.Equal(t, "shopify.users", err2.Domain())
 
 	assert.Equal(t, "gid://shopify/Customer/1234567890", err1.Metadata()["userId"].Value())
@@ -44,7 +44,7 @@ func TestErrorTemplate_CreateInstances(t *testing.T) {
 
 func TestErrorTemplate_TemplateWithHelp(t *testing.T) {
 	template := trogonerror.NewErrorTemplate("shopify.auth", "INVALID_CREDENTIALS",
-		trogonerror.TemplateWithCode(trogonerror.Unauthenticated))
+		trogonerror.TemplateWithCode(trogonerror.CodeUnauthenticated))
 
 	err := template.NewError(trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "tokenType", "bearer"))
 
@@ -53,7 +53,7 @@ func TestErrorTemplate_TemplateWithHelp(t *testing.T) {
 
 func TestErrorTemplate_MultipleHelpLinks(t *testing.T) {
 	template := trogonerror.NewErrorTemplate("shopify.api", "RATE_LIMIT_EXCEEDED",
-		trogonerror.TemplateWithCode(trogonerror.ResourceExhausted))
+		trogonerror.TemplateWithCode(trogonerror.CodeResourceExhausted))
 
 	err := template.NewError()
 
@@ -62,18 +62,18 @@ func TestErrorTemplate_MultipleHelpLinks(t *testing.T) {
 
 func TestErrorTemplate_CustomMessage(t *testing.T) {
 	template := trogonerror.NewErrorTemplate("shopify.orders", "ORDER_PROCESSING_FAILED",
-		trogonerror.TemplateWithCode(trogonerror.Internal),
+		trogonerror.TemplateWithCode(trogonerror.CodeInternal),
 		trogonerror.TemplateWithMessage("This is a custom error message"))
 
 	err := template.NewError()
 
-	assert.Equal(t, trogonerror.Internal, err.Code())
+	assert.Equal(t, trogonerror.CodeInternal, err.Code())
 	assert.Equal(t, "This is a custom error message", err.Message())
 }
 
 func TestErrorTemplate_ValueSemantics(t *testing.T) {
 	template := trogonerror.NewErrorTemplate("shopify.concurrent", "CONCURRENT_ACCESS",
-		trogonerror.TemplateWithCode(trogonerror.Internal))
+		trogonerror.TemplateWithCode(trogonerror.CodeInternal))
 
 	// Create multiple instances concurrently
 	results := make(chan *trogonerror.TrogonError, 100)
@@ -94,7 +94,7 @@ func TestErrorTemplate_ValueSemantics(t *testing.T) {
 
 	for i, err := range errors {
 		assert.Equal(t, "shopify.concurrent", err.Domain(), "Error %d: wrong domain", i)
-		assert.Equal(t, trogonerror.Internal, err.Code(), "Error %d: wrong code", i)
+		assert.Equal(t, trogonerror.CodeInternal, err.Code(), "Error %d: wrong code", i)
 		assert.NotNil(t, err.Time(), "Error %d: time should be set", i)
 
 		goroutineID := err.Metadata()["goroutineId"].Value()
@@ -104,7 +104,7 @@ func TestErrorTemplate_ValueSemantics(t *testing.T) {
 
 func TestErrorTemplate_DefaultMessage(t *testing.T) {
 	template := trogonerror.NewErrorTemplate("shopify.products", "PRODUCT_NOT_FOUND",
-		trogonerror.TemplateWithCode(trogonerror.NotFound))
+		trogonerror.TemplateWithCode(trogonerror.CodeNotFound))
 
 	err := template.NewError()
 
@@ -114,21 +114,21 @@ func TestErrorTemplate_DefaultMessage(t *testing.T) {
 func TestErrorTemplate_OverrideTemplateOptions(t *testing.T) {
 	// Create template with default visibility
 	template := trogonerror.NewErrorTemplate("shopify.inventory", "STOCK_CHECK_FAILED",
-		trogonerror.TemplateWithCode(trogonerror.Internal),
+		trogonerror.TemplateWithCode(trogonerror.CodeInternal),
 		trogonerror.TemplateWithVisibility(trogonerror.VisibilityInternal))
 
 	err := template.NewError(trogonerror.WithVisibility(trogonerror.VisibilityPublic))
 
 	assert.Equal(t, trogonerror.VisibilityPublic, err.Visibility())
-	assert.Equal(t, trogonerror.Internal, err.Code())
+	assert.Equal(t, trogonerror.CodeInternal, err.Code())
 }
 
 func TestErrorTemplate_ErrorsIs(t *testing.T) {
 	userNotFoundTemplate := trogonerror.NewErrorTemplate("shopify.users", "NOT_FOUND",
-		trogonerror.TemplateWithCode(trogonerror.NotFound))
+		trogonerror.TemplateWithCode(trogonerror.CodeNotFound))
 
 	validationTemplate := trogonerror.NewErrorTemplate("shopify.validation", "INVALID_INPUT",
-		trogonerror.TemplateWithCode(trogonerror.InvalidArgument))
+		trogonerror.TemplateWithCode(trogonerror.CodeInvalidArgument))
 	var (
 		ErrUserNotFound = userNotFoundTemplate.NewError()
 		ErrInvalidInput = validationTemplate.NewError()
@@ -200,7 +200,7 @@ func TestErrorTemplate_ErrorsIs(t *testing.T) {
 	// templates ignore stack trace options correctly
 	// Templates don't support stack trace options (they're for error instances only)
 	stackTemplate := trogonerror.NewErrorTemplate("shopify.debugging", "DEBUG_STACK_TEMPLATE",
-		trogonerror.TemplateWithCode(trogonerror.Internal))
+		trogonerror.TemplateWithCode(trogonerror.CodeInternal))
 
 	// Create error from template without stack options
 	err := stackTemplate.NewError()
@@ -230,7 +230,7 @@ func TestTemplateWithHelp(t *testing.T) {
 func ExampleErrorTemplate_reusable() {
 	// Create a validation error template
 	validationTemplate := trogonerror.NewErrorTemplate("shopify.validation", "FIELD_INVALID",
-		trogonerror.TemplateWithCode(trogonerror.InvalidArgument),
+		trogonerror.TemplateWithCode(trogonerror.CodeInvalidArgument),
 		trogonerror.TemplateWithVisibility(trogonerror.VisibilityPublic))
 
 	// Create multiple validation errors from the same template

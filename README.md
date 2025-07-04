@@ -42,16 +42,16 @@ import (
 // Define reusable error templates
 var (
     ErrUserNotFound = trogonerror.NewErrorTemplate("shopify.users", "NOT_FOUND",
-        trogonerror.TemplateWithCode(trogonerror.NotFound))
+        trogonerror.TemplateWithCode(trogonerror.CodeNotFound))
 
     ErrValidationFailed = trogonerror.NewErrorTemplate("shopify", "VALIDATION_FAILED",
-        trogonerror.TemplateWithCode(trogonerror.InvalidArgument))
+        trogonerror.TemplateWithCode(trogonerror.CodeInvalidArgument))
 
     ErrOrderNotCancellable = trogonerror.NewErrorTemplate("shopify.orders", "ORDER_NOT_CANCELLABLE",
-        trogonerror.TemplateWithCode(trogonerror.FailedPrecondition))
+        trogonerror.TemplateWithCode(trogonerror.CodeFailedPrecondition))
 
     ErrDatabaseError = trogonerror.NewErrorTemplate("shopify", "DATABASE_ERROR",
-        trogonerror.TemplateWithCode(trogonerror.Internal))
+        trogonerror.TemplateWithCode(trogonerror.CodeInternal))
 )
 
 type GetUser struct {
@@ -117,7 +117,7 @@ import "github.com/TrogonStack/trogonerror"
 func main() {
     // Create a simple error with clear domain and uppercase reason
     err := trogonerror.NewError("shopify.users", "NOT_FOUND",
-        trogonerror.WithCode(trogonerror.NotFound),
+        trogonerror.WithCode(trogonerror.CodeNotFound),
         trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "userId", "gid://shopify/Customer/1234567890"),
         trogonerror.WithMetadataValue(trogonerror.VisibilityInternal, "requestedBy", "storefront-api"),
         trogonerror.WithMetadataValue(trogonerror.VisibilityInternal, "shopId", "mystore.myshopify.com"))

@@ -14,10 +14,10 @@ import (
 func TestTrogonErrorCreation(t *testing.T) {
 	t.Run("Basic error creation with default values", func(t *testing.T) {
 		err := trogonerror.NewError("shopify.users", "NOT_FOUND",
-			trogonerror.WithCode(trogonerror.NotFound))
+			trogonerror.WithCode(trogonerror.CodeNotFound))
 
 		assert.Equal(t, trogonerror.SpecVersion, err.SpecVersion())
-		assert.Equal(t, trogonerror.NotFound, err.Code())
+		assert.Equal(t, trogonerror.CodeNotFound, err.Code())
 		assert.Equal(t, "resource not found", err.Message())
 		assert.Equal(t, "shopify.users", err.Domain())
 		assert.Equal(t, "NOT_FOUND", err.Reason())
@@ -28,7 +28,7 @@ func TestTrogonErrorCreation(t *testing.T) {
 func TestTrogonErrorOptions(t *testing.T) {
 	t.Run("WithMetadata adds metadata values", func(t *testing.T) {
 		err := trogonerror.NewError("shopify.orders", "INVALID_ORDER_DATA",
-			trogonerror.WithCode(trogonerror.InvalidArgument),
+			trogonerror.WithCode(trogonerror.CodeInvalidArgument),
 			trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "orderId", "gid://shopify/Order/5432109876"),
 			trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "requestId", "req_2024_01_15_abc123def456"))
 
@@ -224,7 +224,7 @@ func TestTrogonErrorDebugInfo(t *testing.T) {
 	})
 	t.Run("WithStackTrace captures stack trace without setting detail", func(t *testing.T) {
 		err := trogonerror.NewError("shopify.parser", "SYNTAX_ERROR",
-			trogonerror.WithCode(trogonerror.Internal),
+			trogonerror.WithCode(trogonerror.CodeInternal),
 			trogonerror.WithStackTrace())
 
 		assert.NotNil(t, err.DebugInfo())
@@ -259,7 +259,7 @@ func TestTrogonErrorDebugInfo(t *testing.T) {
 func TestTrogonErrorMutation(t *testing.T) {
 	t.Run("WithChanges applies multiple changes", func(t *testing.T) {
 		original := trogonerror.NewError("shopify.settings", "CONFIG_NOT_FOUND",
-			trogonerror.WithCode(trogonerror.Unknown),
+			trogonerror.WithCode(trogonerror.CodeUnknown),
 			trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "configKey", "theme_customization_enabled"))
 
 		modified := original.WithChanges(
@@ -364,7 +364,7 @@ func TestTrogonErrorMutation(t *testing.T) {
 
 	t.Run("copy method creates independent copy", func(t *testing.T) {
 		original := trogonerror.NewError("shopify.backup", "BACKUP_FAILED",
-			trogonerror.WithCode(trogonerror.Unknown),
+			trogonerror.WithCode(trogonerror.CodeUnknown),
 			trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "configKey", "theme_customization_enabled"),
 			trogonerror.WithStackTrace(),
 			trogonerror.WithDebugDetail("S3 backup failed: access denied to bucket shopify-backups-prod"),
@@ -469,7 +469,7 @@ func TestTrogonErrorInterfaces(t *testing.T) {
 		assert.Equal(t, expected1, err.Error())
 
 		err2 := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
-			trogonerror.WithCode(trogonerror.NotFound))
+			trogonerror.WithCode(trogonerror.CodeNotFound))
 
 		expected2 := `resource not found
   visibility: INTERNAL
@@ -510,7 +510,7 @@ func TestTrogonErrorInterfaces(t *testing.T) {
 
 func TestCode(t *testing.T) {
 	t.Run("Code methods return correct values", func(t *testing.T) {
-		code := trogonerror.NotFound
+		code := trogonerror.CodeNotFound
 
 		assert.Equal(t, 404, code.HttpStatusCode())
 		assert.Equal(t, "NOT_FOUND", code.String())
@@ -524,22 +524,22 @@ func TestCode(t *testing.T) {
 			code    trogonerror.Code
 			message string
 		}{
-			{trogonerror.Cancelled, "the operation was cancelled"},
-			{trogonerror.Unknown, "unknown error"},
-			{trogonerror.InvalidArgument, "invalid argument provided"},
-			{trogonerror.DeadlineExceeded, "deadline exceeded"},
-			{trogonerror.NotFound, "resource not found"},
-			{trogonerror.AlreadyExists, "resource already exists"},
-			{trogonerror.PermissionDenied, "permission denied"},
-			{trogonerror.Unauthenticated, "unauthenticated"},
-			{trogonerror.ResourceExhausted, "resource exhausted"},
-			{trogonerror.FailedPrecondition, "failed precondition"},
-			{trogonerror.Aborted, "operation aborted"},
-			{trogonerror.OutOfRange, "out of range"},
-			{trogonerror.Unimplemented, "not implemented"},
-			{trogonerror.Internal, "internal error"},
-			{trogonerror.Unavailable, "service unavailable"},
-			{trogonerror.DataLoss, "data loss or corruption"},
+			{trogonerror.CodeCancelled, "the operation was cancelled"},
+			{trogonerror.CodeUnknown, "unknown error"},
+			{trogonerror.CodeInvalidArgument, "invalid argument provided"},
+			{trogonerror.CodeDeadlineExceeded, "deadline exceeded"},
+			{trogonerror.CodeNotFound, "resource not found"},
+			{trogonerror.CodeAlreadyExists, "resource already exists"},
+			{trogonerror.CodePermissionDenied, "permission denied"},
+			{trogonerror.CodeUnauthenticated, "unauthenticated"},
+			{trogonerror.CodeResourceExhausted, "resource exhausted"},
+			{trogonerror.CodeFailedPrecondition, "failed precondition"},
+			{trogonerror.CodeAborted, "operation aborted"},
+			{trogonerror.CodeOutOfRange, "out of range"},
+			{trogonerror.CodeUnimplemented, "not implemented"},
+			{trogonerror.CodeInternal, "internal error"},
+			{trogonerror.CodeUnavailable, "service unavailable"},
+			{trogonerror.CodeDataLoss, "data loss or corruption"},
 		}
 
 		for _, tt := range tests {
@@ -587,22 +587,22 @@ func TestHTTPCodesMatchADR(t *testing.T) {
 		httpCode int
 		name     string
 	}{
-		{trogonerror.Cancelled, 499, "CANCELLED"},
-		{trogonerror.Unknown, 500, "UNKNOWN"},
-		{trogonerror.InvalidArgument, 400, "INVALID_ARGUMENT"},
-		{trogonerror.DeadlineExceeded, 504, "DEADLINE_EXCEEDED"},
-		{trogonerror.NotFound, 404, "NOT_FOUND"},
-		{trogonerror.AlreadyExists, 409, "ALREADY_EXISTS"},
-		{trogonerror.PermissionDenied, 403, "PERMISSION_DENIED"},
-		{trogonerror.Unauthenticated, 401, "UNAUTHENTICATED"},
-		{trogonerror.ResourceExhausted, 429, "RESOURCE_EXHAUSTED"},
-		{trogonerror.FailedPrecondition, 422, "FAILED_PRECONDITION"},
-		{trogonerror.Aborted, 409, "ABORTED"},
-		{trogonerror.OutOfRange, 400, "OUT_OF_RANGE"},
-		{trogonerror.Unimplemented, 501, "UNIMPLEMENTED"},
-		{trogonerror.Internal, 500, "INTERNAL"},
-		{trogonerror.Unavailable, 503, "UNAVAILABLE"},
-		{trogonerror.DataLoss, 500, "DATA_LOSS"},
+		{trogonerror.CodeCancelled, 499, "CANCELLED"},
+		{trogonerror.CodeUnknown, 500, "UNKNOWN"},
+		{trogonerror.CodeInvalidArgument, 400, "INVALID_ARGUMENT"},
+		{trogonerror.CodeDeadlineExceeded, 504, "DEADLINE_EXCEEDED"},
+		{trogonerror.CodeNotFound, 404, "NOT_FOUND"},
+		{trogonerror.CodeAlreadyExists, 409, "ALREADY_EXISTS"},
+		{trogonerror.CodePermissionDenied, 403, "PERMISSION_DENIED"},
+		{trogonerror.CodeUnauthenticated, 401, "UNAUTHENTICATED"},
+		{trogonerror.CodeResourceExhausted, 429, "RESOURCE_EXHAUSTED"},
+		{trogonerror.CodeFailedPrecondition, 422, "FAILED_PRECONDITION"},
+		{trogonerror.CodeAborted, 409, "ABORTED"},
+		{trogonerror.CodeOutOfRange, 400, "OUT_OF_RANGE"},
+		{trogonerror.CodeUnimplemented, 501, "UNIMPLEMENTED"},
+		{trogonerror.CodeInternal, 500, "INTERNAL"},
+		{trogonerror.CodeUnavailable, 503, "UNAVAILABLE"},
+		{trogonerror.CodeDataLoss, 500, "DATA_LOSS"},
 	}
 
 	for _, tt := range tests {
@@ -623,7 +623,7 @@ func TestTrogonErrorWrapping(t *testing.T) {
 		originalErr := fmt.Errorf("PostgreSQL connection failed: timeout after 30s")
 
 		err := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
-			trogonerror.WithCode(trogonerror.Internal),
+			trogonerror.WithCode(trogonerror.CodeInternal),
 			trogonerror.WithWrap(originalErr),
 			trogonerror.WithErrorMessage(originalErr))
 
@@ -633,11 +633,11 @@ func TestTrogonErrorWrapping(t *testing.T) {
 
 	t.Run("WithWrap TrogonError preserves wrapped error without affecting message", func(t *testing.T) {
 		dbErr := trogonerror.NewError("shopify.database", "CONNECTION_FAILED",
-			trogonerror.WithCode(trogonerror.Unavailable),
+			trogonerror.WithCode(trogonerror.CodeUnavailable),
 			trogonerror.WithMessage("PostgreSQL connection timeout after 30 seconds"))
 
 		err := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
-			trogonerror.WithCode(trogonerror.Internal),
+			trogonerror.WithCode(trogonerror.CodeInternal),
 			trogonerror.WithWrap(dbErr))
 
 		assert.Equal(t, "internal error", err.Message())
@@ -648,7 +648,7 @@ func TestTrogonErrorWrapping(t *testing.T) {
 		originalErr := fmt.Errorf("Email validation failed")
 
 		err := trogonerror.NewError("shopify.users", "USER_CREATION_FAILED",
-			trogonerror.WithCode(trogonerror.InvalidArgument),
+			trogonerror.WithCode(trogonerror.CodeInvalidArgument),
 			trogonerror.WithWrap(originalErr),
 			trogonerror.WithErrorMessage(originalErr),
 			trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "field", "email"),
@@ -664,7 +664,7 @@ func TestTrogonErrorWrapping(t *testing.T) {
 
 	t.Run("WithWrap preserves wrapped error chain for errors.Is", func(t *testing.T) {
 		err := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
-			trogonerror.WithCode(trogonerror.Internal),
+			trogonerror.WithCode(trogonerror.CodeInternal),
 			trogonerror.WithWrap(stdErr))
 
 		// Should match the wrapped error chain
@@ -678,11 +678,11 @@ func TestTrogonErrorWrapping(t *testing.T) {
 
 	t.Run("WithWrap chaining TrogonErrors preserves full error chain", func(t *testing.T) {
 		dbErr := trogonerror.NewError("shopify.database", "CONNECTION_FAILED",
-			trogonerror.WithCode(trogonerror.Unavailable),
+			trogonerror.WithCode(trogonerror.CodeUnavailable),
 			trogonerror.WithWrap(customErr))
 
 		serviceErr := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
-			trogonerror.WithCode(trogonerror.Internal),
+			trogonerror.WithCode(trogonerror.CodeInternal),
 			trogonerror.WithWrap(dbErr))
 
 		assert.True(t, errors.Is(serviceErr, dbErr))
@@ -792,7 +792,7 @@ func TestErrorTemplate(t *testing.T) {
 
 		assert.Equal(t, "shopify.session", err.Domain())
 		assert.Equal(t, "SESSION_EXPIRED", err.Reason())
-		assert.Equal(t, trogonerror.Unknown, err.Code())
+		assert.Equal(t, trogonerror.CodeUnknown, err.Code())
 		assert.Equal(t, trogonerror.VisibilityInternal, err.Visibility())
 	})
 
@@ -824,14 +824,14 @@ func TestErrorTemplate(t *testing.T) {
 
 	t.Run("Template with all options", func(t *testing.T) {
 		template := trogonerror.NewErrorTemplate("shopify.templates", "TEMPLATE_RENDERING_FAILED",
-			trogonerror.TemplateWithCode(trogonerror.InvalidArgument),
+			trogonerror.TemplateWithCode(trogonerror.CodeInvalidArgument),
 			trogonerror.TemplateWithMessage("Custom template message"),
 			trogonerror.TemplateWithVisibility(trogonerror.VisibilityPublic),
 			trogonerror.TemplateWithHelpLink("Docs", "https://example.com"))
 
 		err := template.NewError(trogonerror.WithID("err_2024_01_15_template_rendering_abc123"))
 
-		assert.Equal(t, trogonerror.InvalidArgument, err.Code())
+		assert.Equal(t, trogonerror.CodeInvalidArgument, err.Code())
 		assert.Equal(t, "Custom template message", err.Message())
 		assert.Equal(t, trogonerror.VisibilityPublic, err.Visibility())
 		assert.Equal(t, "err_2024_01_15_template_rendering_abc123", err.ID())
