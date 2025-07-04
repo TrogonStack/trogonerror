@@ -23,7 +23,7 @@ func TestTrogonError_ExactFormat_MinimalError(t *testing.T) {
 
 func TestTrogonError_ExactFormat_WithRetryDuration(t *testing.T) {
 	err := trogonerror.NewError("shopify.api", "RATE_LIMIT_EXCEEDED",
-		trogonerror.WithCode(trogonerror.ResourceExhausted),
+		trogonerror.WithCode(trogonerror.CodeResourceExhausted),
 		trogonerror.WithMessage("API rate limit exceeded"),
 		trogonerror.WithRetryInfoDuration(60*time.Second),
 		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "limit", "1000"))
@@ -63,7 +63,7 @@ func TestTrogonError_ExactFormat_MetadataOrdering(t *testing.T) {
 
 func TestTrogonError_ExactFormat_EmptyOptionalFields(t *testing.T) {
 	err := trogonerror.NewError("shopify.core", "RESOURCE_MISSING",
-		trogonerror.WithCode(trogonerror.NotFound),
+		trogonerror.WithCode(trogonerror.CodeNotFound),
 		trogonerror.WithSubject(""),  // Empty string
 		trogonerror.WithID(""),       // Empty string
 		trogonerror.WithSourceID("")) // Empty string
@@ -99,7 +99,7 @@ func TestTrogonError_ExactFormat_MultipleHelpLinks(t *testing.T) {
 
 func TestTrogonError_ExactFormat_DefaultMessage(t *testing.T) {
 	err := trogonerror.NewError("shopify.core", "PRODUCT_NOT_FOUND",
-		trogonerror.WithCode(trogonerror.NotFound))
+		trogonerror.WithCode(trogonerror.CodeNotFound))
 
 	expected := `resource not found
   visibility: INTERNAL
@@ -112,7 +112,7 @@ func TestTrogonError_ExactFormat_DefaultMessage(t *testing.T) {
 
 func TestTrogonError_ExactFormat_CustomMessage(t *testing.T) {
 	err := trogonerror.NewError("shopify.core", "ORDER_NOT_FOUND",
-		trogonerror.WithCode(trogonerror.NotFound),
+		trogonerror.WithCode(trogonerror.CodeNotFound),
 		trogonerror.WithMessage("Custom error message"))
 
 	expected := `Custom error message
@@ -129,7 +129,7 @@ func TestTrogonError_ExactFormat_WithAllOptionalFields(t *testing.T) {
 	retryTime := time.Date(2024, 1, 15, 14, 35, 45, 0, time.UTC)
 
 	err := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
-		trogonerror.WithCode(trogonerror.Internal),
+		trogonerror.WithCode(trogonerror.CodeInternal),
 		trogonerror.WithMessage("Payment processing failed"),
 		trogonerror.WithVisibility(trogonerror.VisibilityPrivate),
 		trogonerror.WithSubject("/payment/amount"),
@@ -185,7 +185,7 @@ func TestTrogonError_ExactFormat_CompleteErrorWithStackTrace(t *testing.T) {
 	retryTime := time.Date(2024, 1, 15, 14, 35, 45, 0, time.UTC)
 
 	err := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
-		trogonerror.WithCode(trogonerror.Internal),
+		trogonerror.WithCode(trogonerror.CodeInternal),
 		trogonerror.WithMessage("Payment processing failed due to upstream service error"),
 		trogonerror.WithVisibility(trogonerror.VisibilityPrivate),
 		trogonerror.WithSubject("/payment/amount"),

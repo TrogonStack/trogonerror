@@ -17,22 +17,22 @@ const SpecVersion = 1
 type Code int
 
 const (
-	Cancelled Code = 1 + iota
-	Unknown
-	InvalidArgument
-	DeadlineExceeded
-	NotFound
-	AlreadyExists
-	PermissionDenied
-	ResourceExhausted
-	FailedPrecondition
-	Aborted
-	OutOfRange
-	Unimplemented
-	Internal
-	Unavailable
-	DataLoss
-	Unauthenticated
+	CodeCancelled Code = 1 + iota
+	CodeUnknown
+	CodeInvalidArgument
+	CodeDeadlineExceeded
+	CodeNotFound
+	CodeAlreadyExists
+	CodePermissionDenied
+	CodeResourceExhausted
+	CodeFailedPrecondition
+	CodeAborted
+	CodeOutOfRange
+	CodeUnimplemented
+	CodeInternal
+	CodeUnavailable
+	CodeDataLoss
+	CodeUnauthenticated
 )
 
 // Visibility controls information disclosure across trust boundaries
@@ -190,37 +190,37 @@ func (e TrogonError) Unwrap() error {
 
 func (c Code) Message() string {
 	switch c {
-	case Cancelled:
+	case CodeCancelled:
 		return "the operation was cancelled"
-	case Unknown:
+	case CodeUnknown:
 		return "unknown error"
-	case InvalidArgument:
+	case CodeInvalidArgument:
 		return "invalid argument provided"
-	case DeadlineExceeded:
+	case CodeDeadlineExceeded:
 		return "deadline exceeded"
-	case NotFound:
+	case CodeNotFound:
 		return "resource not found"
-	case AlreadyExists:
+	case CodeAlreadyExists:
 		return "resource already exists"
-	case PermissionDenied:
+	case CodePermissionDenied:
 		return "permission denied"
-	case Unauthenticated:
+	case CodeUnauthenticated:
 		return "unauthenticated"
-	case ResourceExhausted:
+	case CodeResourceExhausted:
 		return "resource exhausted"
-	case FailedPrecondition:
+	case CodeFailedPrecondition:
 		return "failed precondition"
-	case Aborted:
+	case CodeAborted:
 		return "operation aborted"
-	case OutOfRange:
+	case CodeOutOfRange:
 		return "out of range"
-	case Unimplemented:
+	case CodeUnimplemented:
 		return "not implemented"
-	case Internal:
+	case CodeInternal:
 		return "internal error"
-	case Unavailable:
+	case CodeUnavailable:
 		return "service unavailable"
-	case DataLoss:
+	case CodeDataLoss:
 		return "data loss or corruption"
 	default:
 		return "unknown error"
@@ -229,37 +229,37 @@ func (c Code) Message() string {
 
 func (c Code) HttpStatusCode() int {
 	switch c {
-	case Cancelled:
+	case CodeCancelled:
 		return 499
-	case Unknown:
+	case CodeUnknown:
 		return 500
-	case InvalidArgument:
+	case CodeInvalidArgument:
 		return 400
-	case DeadlineExceeded:
+	case CodeDeadlineExceeded:
 		return 504
-	case NotFound:
+	case CodeNotFound:
 		return 404
-	case AlreadyExists:
+	case CodeAlreadyExists:
 		return 409
-	case PermissionDenied:
+	case CodePermissionDenied:
 		return 403
-	case ResourceExhausted:
+	case CodeResourceExhausted:
 		return 429
-	case FailedPrecondition:
+	case CodeFailedPrecondition:
 		return 422
-	case Aborted:
+	case CodeAborted:
 		return 409
-	case OutOfRange:
+	case CodeOutOfRange:
 		return 400
-	case Unimplemented:
+	case CodeUnimplemented:
 		return 501
-	case Internal:
+	case CodeInternal:
 		return 500
-	case Unavailable:
+	case CodeUnavailable:
 		return 503
-	case DataLoss:
+	case CodeDataLoss:
 		return 500
-	case Unauthenticated:
+	case CodeUnauthenticated:
 		return 401
 	default:
 		return 500
@@ -268,37 +268,37 @@ func (c Code) HttpStatusCode() int {
 
 func (c Code) String() string {
 	switch c {
-	case Cancelled:
+	case CodeCancelled:
 		return "CANCELLED"
-	case Unknown:
+	case CodeUnknown:
 		return "UNKNOWN"
-	case InvalidArgument:
+	case CodeInvalidArgument:
 		return "INVALID_ARGUMENT"
-	case DeadlineExceeded:
+	case CodeDeadlineExceeded:
 		return "DEADLINE_EXCEEDED"
-	case NotFound:
+	case CodeNotFound:
 		return "NOT_FOUND"
-	case AlreadyExists:
+	case CodeAlreadyExists:
 		return "ALREADY_EXISTS"
-	case PermissionDenied:
+	case CodePermissionDenied:
 		return "PERMISSION_DENIED"
-	case ResourceExhausted:
+	case CodeResourceExhausted:
 		return "RESOURCE_EXHAUSTED"
-	case FailedPrecondition:
+	case CodeFailedPrecondition:
 		return "FAILED_PRECONDITION"
-	case Aborted:
+	case CodeAborted:
 		return "ABORTED"
-	case OutOfRange:
+	case CodeOutOfRange:
 		return "OUT_OF_RANGE"
-	case Unimplemented:
+	case CodeUnimplemented:
 		return "UNIMPLEMENTED"
-	case Internal:
+	case CodeInternal:
 		return "INTERNAL"
-	case Unavailable:
+	case CodeUnavailable:
 		return "UNAVAILABLE"
-	case DataLoss:
+	case CodeDataLoss:
 		return "DATA_LOSS"
-	case Unauthenticated:
+	case CodeUnauthenticated:
 		return "UNAUTHENTICATED"
 	default:
 		return "UNKNOWN"
@@ -327,7 +327,7 @@ type ErrorOption func(*TrogonError)
 func NewError(domain, reason string, options ...ErrorOption) *TrogonError {
 	err := &TrogonError{
 		specVersion: SpecVersion,
-		code:        Unknown,
+		code:        CodeUnknown,
 		message:     "", // empty string means use code's default message
 		domain:      domain,
 		reason:      reason,
@@ -798,7 +798,7 @@ func NewErrorTemplate(domain, reason string, options ...TemplateOption) *ErrorTe
 	template := &ErrorTemplate{
 		domain:     domain,
 		reason:     reason,
-		code:       Unknown,
+		code:       CodeUnknown,
 		message:    "", // empty string means use code's default message
 		visibility: VisibilityInternal,
 	}

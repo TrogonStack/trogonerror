@@ -12,13 +12,13 @@
 //
 //	var (
 //		ErrUserNotFound = trogonerror.NewErrorTemplate("shopify.users", "NOT_FOUND",
-//			trogonerror.TemplateWithCode(trogonerror.NotFound))
+//			trogonerror.TemplateWithCode(trogonerror.CodeNotFound))
 //
 //		ErrValidationFailed = trogonerror.NewErrorTemplate("shopify.validation", "INVALID_INPUT",
-//			trogonerror.TemplateWithCode(trogonerror.InvalidArgument))
+//			trogonerror.TemplateWithCode(trogonerror.CodeInvalidArgument))
 //
 //		ErrDatabaseError = trogonerror.NewErrorTemplate("shopify.database", "CONNECTION_FAILED",
-//			trogonerror.TemplateWithCode(trogonerror.Internal))
+//			trogonerror.TemplateWithCode(trogonerror.CodeInternal))
 //	)
 //
 //	func GetUser(id string) (*User, error) {
@@ -38,7 +38,7 @@
 // Create errors using functional options:
 //
 //	err := trogonerror.NewError("shopify.users", "NOT_FOUND",
-//		trogonerror.WithCode(trogonerror.NotFound),
+//		trogonerror.WithCode(trogonerror.CodeNotFound),
 //		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "userId", "gid://shopify/Customer/1234567890"))
 //
 // # Error Codes and HTTP Status Mapping
@@ -66,7 +66,7 @@
 //
 // Access code information:
 //
-//	code := trogonerror.NotFound
+//	code := trogonerror.CodeNotFound
 //	fmt.Println(code.String())         // "NOT_FOUND"
 //	fmt.Println(code.HttpStatusCode()) // 404
 //	fmt.Println(code.Message())        // "resource not found"
@@ -80,7 +80,7 @@
 //	VisibilityPublic:   Safe to expose to external users
 //
 //	err := trogonerror.NewError("shopify.auth", "ACCESS_DENIED",
-//		trogonerror.WithCode(trogonerror.PermissionDenied),
+//		trogonerror.WithCode(trogonerror.CodePermissionDenied),
 //		trogonerror.WithVisibility(trogonerror.VisibilityPublic),
 //		trogonerror.WithMetadataValue(trogonerror.VisibilityInternal, "userId", "gid://shopify/Customer/1234567890"),
 //		trogonerror.WithMetadataValue(trogonerror.VisibilityPrivate, "resource", "/admin/customers"),
@@ -100,16 +100,16 @@
 // Chain errors to preserve context while wrapping standard Go errors:
 //
 //	dbErr := trogonerror.NewError("shopify.database", "CONNECTION_FAILED",
-//		trogonerror.WithCode(trogonerror.Internal))
+//		trogonerror.WithCode(trogonerror.CodeInternal))
 //
 //	serviceErr := trogonerror.NewError("shopify.users", "USER_FETCH_FAILED",
-//		trogonerror.WithCode(trogonerror.Internal),
+//		trogonerror.WithCode(trogonerror.CodeInternal),
 //		trogonerror.WithCause(dbErr))
 //
 //	// Wrap standard Go errors
 //	originalErr := fmt.Errorf("connection timeout")
 //	wrappedErr := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT",
-//		trogonerror.WithCode(trogonerror.Unavailable),
+//		trogonerror.WithCode(trogonerror.CodeUnavailable),
 //		trogonerror.WithWrap(originalErr),
 //		trogonerror.WithErrorMessage(originalErr))
 //
@@ -118,7 +118,7 @@
 // Capture stack traces and debug information for internal debugging:
 //
 //	err := trogonerror.NewError("shopify.database", "QUERY_TIMEOUT",
-//		trogonerror.WithCode(trogonerror.Internal),
+//		trogonerror.WithCode(trogonerror.CodeInternal),
 //		trogonerror.WithStackTrace(),
 //		trogonerror.WithDebugDetail("Query execution exceeded 30s timeout"),
 //		trogonerror.WithMetadataValue(trogonerror.VisibilityInternal, "query", "SELECT * FROM users WHERE id = $1"))
@@ -135,14 +135,14 @@
 //
 //	// Retry after a duration
 //	err := trogonerror.NewError("shopify.api", "RATE_LIMIT_EXCEEDED",
-//		trogonerror.WithCode(trogonerror.ResourceExhausted),
+//		trogonerror.WithCode(trogonerror.CodeResourceExhausted),
 //		trogonerror.WithRetryInfoDuration(60*time.Second),
 //		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "limit", "1000"))
 //
 //	// Retry at specific time
 //	retryTime := time.Now().Add(5 * time.Minute)
 //	err := trogonerror.NewError("shopify.maintenance", "SERVICE_UNAVAILABLE",
-//		trogonerror.WithCode(trogonerror.Unavailable),
+//		trogonerror.WithCode(trogonerror.CodeUnavailable),
 //		trogonerror.WithRetryTime(retryTime))
 //
 // # Help Links and User Guidance
@@ -150,7 +150,7 @@
 // Provide actionable help links with formatting support:
 //
 //	err := trogonerror.NewError("shopify.users", "INVALID_EMAIL",
-//		trogonerror.WithCode(trogonerror.InvalidArgument),
+//		trogonerror.WithCode(trogonerror.CodeInvalidArgument),
 //		trogonerror.WithHelpLink("Fix Email", "https://admin.shopify.com/customers/1234567890/edit#email"),
 //		trogonerror.WithHelpLinkf("Customer Console", "https://admin.shopify.com/customers/%s/help", userID))
 //
@@ -159,7 +159,7 @@
 // Support localized error messages:
 //
 //	err := trogonerror.NewError("shopify.users", "NOT_FOUND",
-//		trogonerror.WithCode(trogonerror.NotFound),
+//		trogonerror.WithCode(trogonerror.CodeNotFound),
 //		trogonerror.WithLocalizedMessage("es-ES", "Usuario no encontrado"))
 //
 //	fmt.Println(err.Message())                    // "resource not found" (default)
@@ -211,7 +211,7 @@
 // Here's a complete example showing production usage:
 //
 //	var ErrPaymentFailed = trogonerror.NewErrorTemplate("shopify.payments", "PAYMENT_DECLINED",
-//		trogonerror.TemplateWithCode(trogonerror.Internal))
+//		trogonerror.TemplateWithCode(trogonerror.CodeInternal))
 //
 //	func ProcessPayment(orderID, userID string, amount int) error {
 //		// Simulate payment processing
