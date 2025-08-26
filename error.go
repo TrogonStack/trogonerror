@@ -141,31 +141,38 @@ func (e TrogonError) Error() string {
 	}
 
 	if len(e.metadata) > 0 {
-		sb.WriteString("\n  metadata:\n")
+		sb.WriteString("\n  metadata:")
 
 		for _, k := range slices.Sorted(maps.Keys(e.metadata)) {
 			v := e.metadata[k]
-			fmt.Fprintf(sb, "    - %s: %s visibility=%s\n", k, v.value, v.visibility.String())
+			fmt.Fprintf(sb, "\n    - %s: %s visibility=%s", k, v.value, v.visibility.String())
 		}
 	}
 
 	if e.help != nil && len(e.help.links) > 0 {
-		sb.WriteString("\n")
+		sb.WriteString("\n\n")
 		for i, link := range e.help.links {
 			if i > 0 {
 				sb.WriteString("\n")
 			}
 			fmt.Fprintf(sb, "- %s: %s", link.description, link.url)
 		}
-		sb.WriteString("\n\n")
+	}
+
+	if e.wrappedErr != nil {
+		sb.WriteString("\n\nwrapped error: ")
+		sb.WriteString(e.wrappedErr.Error())
 	}
 
 	if e.debugInfo != nil {
+		sb.WriteString("\n")
 		if e.debugInfo.detail != "" {
+			sb.WriteString("\n")
 			sb.WriteString(e.debugInfo.detail)
 		}
 
 		for _, entry := range e.debugInfo.StackEntries() {
+			sb.WriteString("\n")
 			sb.WriteString(entry)
 		}
 	}

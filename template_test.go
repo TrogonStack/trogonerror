@@ -256,7 +256,6 @@ func ExampleErrorTemplate_reusable() {
 	//   subject: /email
 	//   metadata:
 	//     - fieldName: email visibility=PUBLIC
-	//
 	// Phone validation: invalid argument provided
 	//   visibility: PUBLIC
 	//   domain: shopify.validation
@@ -265,7 +264,6 @@ func ExampleErrorTemplate_reusable() {
 	//   subject: /phone
 	//   metadata:
 	//     - fieldName: phone visibility=PUBLIC
-	//
 	// Same domain: true
 	// Same reason: true
 }
