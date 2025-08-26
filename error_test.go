@@ -596,7 +596,7 @@ func TestHTTPCodesMatchADR(t *testing.T) {
 		{trogonerror.CodePermissionDenied, 403, "PERMISSION_DENIED"},
 		{trogonerror.CodeUnauthenticated, 401, "UNAUTHENTICATED"},
 		{trogonerror.CodeResourceExhausted, 429, "RESOURCE_EXHAUSTED"},
-		{trogonerror.CodeFailedPrecondition, 422, "FAILED_PRECONDITION"},
+		{trogonerror.CodeFailedPrecondition, 400, "FAILED_PRECONDITION"},
 		{trogonerror.CodeAborted, 409, "ABORTED"},
 		{trogonerror.CodeOutOfRange, 400, "OUT_OF_RANGE"},
 		{trogonerror.CodeUnimplemented, 501, "UNIMPLEMENTED"},
