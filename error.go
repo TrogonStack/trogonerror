@@ -253,7 +253,7 @@ func (c Code) HttpStatusCode() int {
 	case CodeResourceExhausted:
 		return 429
 	case CodeFailedPrecondition:
-		return 422
+		return 400
 	case CodeAborted:
 		return 409
 	case CodeOutOfRange:

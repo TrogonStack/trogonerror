@@ -56,7 +56,7 @@
 //	PermissionDenied        403           Access denied
 //	Unauthenticated         401           Authentication required
 //	ResourceExhausted       429           Rate limit exceeded
-//	FailedPrecondition      422           Precondition failed
+//	FailedPrecondition      400           Precondition failed
 //	Aborted                 409           Operation aborted
 //	OutOfRange              400           Value out of range
 //	Unimplemented           501           Not implemented
