@@ -23,7 +23,6 @@ func ExampleNewError() {
 	//   code: NOT_FOUND
 	//   metadata:
 	//     - userId: gid://shopify/Customer/1234567890 visibility=PUBLIC
-	//
 	// shopify.users
 	// NOT_FOUND
 }
@@ -46,7 +45,6 @@ func ExampleErrorTemplate() {
 	//   code: NOT_FOUND
 	//   metadata:
 	//     - userId: gid://shopify/Customer/1234567890 visibility=PUBLIC
-	//
 	// shopify.users
 	// NOT_FOUND
 }
@@ -102,7 +100,6 @@ func ExampleNewError_basic() {
 	//   code: NOT_FOUND
 	//   metadata:
 	//     - userId: gid://shopify/Customer/1234567890 visibility=PUBLIC
-	//
 	// Domain: shopify.users
 	// Reason: NOT_FOUND
 	// Code: NOT_FOUND

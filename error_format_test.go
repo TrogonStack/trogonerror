@@ -1,6 +1,7 @@
 package trogonerror_test
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -35,8 +36,7 @@ func TestTrogonError_ExactFormat_WithRetryDuration(t *testing.T) {
   code: RESOURCE_EXHAUSTED
   retryInfo: retryOffset=1m0s
   metadata:
-    - limit: 1000 visibility=PUBLIC
-`
+    - limit: 1000 visibility=PUBLIC`
 
 	assert.Equal(t, expected, err.Error())
 }
@@ -55,8 +55,7 @@ func TestTrogonError_ExactFormat_MetadataOrdering(t *testing.T) {
   metadata:
     - customerId: gid://shopify/Customer/1234567890 visibility=PUBLIC
     - orderId: gid://shopify/Order/5432109876 visibility=PUBLIC
-    - productType: digital visibility=PUBLIC
-`
+    - productType: digital visibility=PUBLIC`
 
 	assert.Equal(t, expected, err.Error())
 }
@@ -64,9 +63,9 @@ func TestTrogonError_ExactFormat_MetadataOrdering(t *testing.T) {
 func TestTrogonError_ExactFormat_EmptyOptionalFields(t *testing.T) {
 	err := trogonerror.NewError("shopify.core", "RESOURCE_MISSING",
 		trogonerror.WithCode(trogonerror.CodeNotFound),
-		trogonerror.WithSubject(""),  // Empty string
-		trogonerror.WithID(""),       // Empty string
-		trogonerror.WithSourceID("")) // Empty string
+		trogonerror.WithSubject(""),
+		trogonerror.WithID(""),
+		trogonerror.WithSourceID(""))
 
 	expected := `resource not found
   visibility: INTERNAL
@@ -88,11 +87,10 @@ func TestTrogonError_ExactFormat_MultipleHelpLinks(t *testing.T) {
   domain: shopify.support
   reason: HELP_SYSTEM_DOWN
   code: UNKNOWN
+
 - Contact Support: https://admin.shopify.com/support/new
 - Check Status: https://status.shopify.com
-- Retry Request: https://admin.shopify.com/support/retry
-
-`
+- Retry Request: https://admin.shopify.com/support/retry`
 
 	assert.Equal(t, expected, err.Error())
 }
@@ -155,9 +153,7 @@ func TestTrogonError_ExactFormat_WithAllOptionalFields(t *testing.T) {
     - amount: 299.99 visibility=PRIVATE
     - currency: USD visibility=PUBLIC
 
-- Retry Payment: https://admin.shopify.com/orders/pay_2024_01_15_def456ghi789/retry
-
-`
+- Retry Payment: https://admin.shopify.com/orders/pay_2024_01_15_def456ghi789/retry`
 
 	assert.Equal(t, expected, err.Error())
 }
@@ -173,14 +169,15 @@ func TestTrogonError_ExactFormat_WithStackTrace(t *testing.T) {
   visibility: INTERNAL
   domain: shopify.debugging
   reason: STACK_TRACE_ERROR
-  code: UNKNOWNCustom debug detail`
+  code: UNKNOWN
+
+Custom debug detail`
 	assert.True(t, strings.HasPrefix(errorOutput, expectedPrefix))
 	assert.Contains(t, errorOutput, ".go:")
 	assert.Contains(t, errorOutput, "github.com/TrogonStack/trogonerror")
 }
 
 func TestTrogonError_ExactFormat_CompleteErrorWithStackTrace(t *testing.T) {
-	// Create a comprehensive error to test the complete format
 	timestamp := time.Date(2024, 1, 15, 14, 30, 45, 0, time.UTC)
 	retryTime := time.Date(2024, 1, 15, 14, 35, 45, 0, time.UTC)
 
@@ -230,4 +227,131 @@ Payment gateway integration failure: upstream timeout`
 	assert.True(t, strings.HasPrefix(errorOutput, expectedPrefix))
 	assert.Contains(t, errorOutput, ".go:")
 	assert.Contains(t, errorOutput, "github.com/TrogonStack/trogonerror")
+}
+
+func TestTrogonError_ExactFormat_WithWrappedStandardError(t *testing.T) {
+	originalErr := errors.New("connection timeout after 30s")
+	err := trogonerror.NewError("myapp.database", "CONNECTION_FAILED",
+		trogonerror.WithCode(trogonerror.CodeUnavailable),
+		trogonerror.WithMessage("Failed to connect to database"),
+		trogonerror.WithWrap(originalErr))
+
+	expected := `Failed to connect to database
+  visibility: INTERNAL
+  domain: myapp.database
+  reason: CONNECTION_FAILED
+  code: UNAVAILABLE
+
+wrapped error: connection timeout after 30s`
+
+	assert.Equal(t, expected, err.Error())
+}
+
+func TestTrogonError_ExactFormat_WithWrappedTrogonError(t *testing.T) {
+	innerErr := trogonerror.NewError("myapp.network", "DNS_RESOLUTION_FAILED",
+		trogonerror.WithCode(trogonerror.CodeInternal),
+		trogonerror.WithMessage("DNS lookup failed for db.example.com"))
+
+	outerErr := trogonerror.NewError("myapp.database", "CONNECTION_FAILED",
+		trogonerror.WithCode(trogonerror.CodeUnavailable),
+		trogonerror.WithMessage("Database connection establishment failed"),
+		trogonerror.WithWrap(innerErr))
+
+	expected := `Database connection establishment failed
+  visibility: INTERNAL
+  domain: myapp.database
+  reason: CONNECTION_FAILED
+  code: UNAVAILABLE
+
+wrapped error: DNS lookup failed for db.example.com
+  visibility: INTERNAL
+  domain: myapp.network
+  reason: DNS_RESOLUTION_FAILED
+  code: INTERNAL`
+
+	assert.Equal(t, expected, outerErr.Error())
+}
+
+func TestTrogonError_ExactFormat_NoWrappedError(t *testing.T) {
+	err := trogonerror.NewError("myapp.validation", "INVALID_INPUT",
+		trogonerror.WithCode(trogonerror.CodeInvalidArgument),
+		trogonerror.WithMessage("Email format is invalid"))
+
+	expected := `Email format is invalid
+  visibility: INTERNAL
+  domain: myapp.validation
+  reason: INVALID_INPUT
+  code: INVALID_ARGUMENT`
+
+	assert.Equal(t, expected, err.Error())
+}
+
+func TestTrogonError_ExactFormat_WrappedErrorWithMetadata(t *testing.T) {
+	originalErr := errors.New("invalid JSON at position 42")
+	err := trogonerror.NewError("myapp.parser", "PARSE_ERROR",
+		trogonerror.WithCode(trogonerror.CodeInvalidArgument),
+		trogonerror.WithMessage("Failed to parse request body"),
+		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "contentType", "application/json"),
+		trogonerror.WithMetadataValue(trogonerror.VisibilityPrivate, "position", "42"),
+		trogonerror.WithWrap(originalErr))
+
+	expected := `Failed to parse request body
+  visibility: INTERNAL
+  domain: myapp.parser
+  reason: PARSE_ERROR
+  code: INVALID_ARGUMENT
+  metadata:
+    - contentType: application/json visibility=PUBLIC
+    - position: 42 visibility=PRIVATE
+
+wrapped error: invalid JSON at position 42`
+
+	assert.Equal(t, expected, err.Error())
+}
+
+func TestTrogonError_ExactFormat_WrappedErrorWithAllFields(t *testing.T) {
+	timestamp := time.Date(2024, 1, 15, 14, 30, 45, 0, time.UTC)
+	originalErr := errors.New("network connection reset")
+
+	err := trogonerror.NewError("myapp.service", "SERVICE_ERROR",
+		trogonerror.WithCode(trogonerror.CodeInternal),
+		trogonerror.WithMessage("Service request failed"),
+		trogonerror.WithVisibility(trogonerror.VisibilityPrivate),
+		trogonerror.WithID("err_2024_01_15_svc_123"),
+		trogonerror.WithTime(timestamp),
+		trogonerror.WithSubject("/api/endpoint"),
+		trogonerror.WithSourceID("service-node-01"),
+		trogonerror.WithHelpLink("Retry Request", "https://docs.example.com/retry"),
+		trogonerror.WithWrap(originalErr))
+
+	expected := `Service request failed
+  visibility: PRIVATE
+  domain: myapp.service
+  reason: SERVICE_ERROR
+  code: INTERNAL
+  id: err_2024_01_15_svc_123
+  time: 2024-01-15T14:30:45Z
+  subject: /api/endpoint
+  sourceId: service-node-01
+
+- Retry Request: https://docs.example.com/retry
+
+wrapped error: network connection reset`
+
+	assert.Equal(t, expected, err.Error())
+}
+
+func TestTrogonError_ExactFormat_WrappedErrorBeforeStackTrace(t *testing.T) {
+	originalErr := errors.New("database connection timeout")
+	err := trogonerror.NewError("myapp.service", "OPERATION_FAILED",
+		trogonerror.WithCode(trogonerror.CodeInternal),
+		trogonerror.WithMessage("Service operation failed"),
+		trogonerror.WithWrap(originalErr),
+		trogonerror.WithStackTrace(),
+		trogonerror.WithDebugDetail("Debug: Connection pool exhausted"))
+
+	output := err.Error()
+
+	assert.Contains(t, output, "wrapped error: database connection timeout")
+	assert.True(t, strings.Index(output, "wrapped error:") < strings.Index(output, "Debug: Connection pool exhausted"))
 }
