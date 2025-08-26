@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/TrogonStack/trogonerror/compare/v0.3.0...v0.3.1) (2025-08-26)
+
+
+### Bug Fixes
+
+* Update HTTP status code for FailedPrecondition to 400 ([#8](https://github.com/TrogonStack/trogonerror/issues/8)) ([baef5cc](https://github.com/TrogonStack/trogonerror/commit/baef5cc3640e0893b9a9b5e446d02ad99d4268da))
+
 ## [0.3.0](https://github.com/TrogonStack/trogonerror/compare/v0.2.1...v0.3.0) (2025-08-26)
 
 
