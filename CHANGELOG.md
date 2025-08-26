@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/TrogonStack/trogonerror/compare/v0.2.1...v0.3.0) (2025-08-26)
+
+
+### Features
+
+* Enhance error formatting with wrapped errors ([#6](https://github.com/TrogonStack/trogonerror/issues/6)) ([ba9f758](https://github.com/TrogonStack/trogonerror/commit/ba9f75840be61a10d674cd0fd198defdd1c42b37))
+
 ## [0.2.1](https://github.com/TrogonStack/trogonerror/compare/v0.2.0...v0.2.1) (2025-07-04)
 
 
