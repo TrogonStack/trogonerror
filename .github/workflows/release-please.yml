@@ -17,7 +17,7 @@ jobs:
     steps:
       - name: Release Please
         id: release
-        uses: googleapis/release-please-action@v4.2.0
+        uses: googleapis/release-please-action@v4.3.0
         with:
           token: ${{ secrets.GH_PAT_RELEASE_PLEASE_ACTION }}
           config-file: .github/.release-please-config.json
