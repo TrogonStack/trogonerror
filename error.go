@@ -894,6 +894,35 @@ func addHelpLink(e *TrogonError, description, url string) {
 	})
 }
 
+type trogonError interface {
+	Is(error) bool
+}
+
+// As checks if the error matches the target and returns the TrogonError if it does.
+// This combines error matching and error extraction in a single, more idiomatic operation.
+// The target can be either a TrogonError or an ErrorTemplate.
+// Returns the TrogonError and true if the error matches, nil and false otherwise.
+//
+// Example usage:
+//
+//	if trogonErr, ok := trogonerror.As(err, users.ErrUserNotFound); ok {
+//	    return trogonErr.WithChanges(
+//	        trogonerror.WithChangeMetadataValue(trogonerror.VisibilityPublic, "user_id", req.UserID),
+//	    )
+//	}
+func As(err error, target trogonError) (*TrogonError, bool) {
+	var trogonErr *TrogonError
+	if !errors.As(err, &trogonErr) {
+		return nil, false
+	}
+
+	if !target.Is(trogonErr) {
+		return nil, false
+	}
+
+	return trogonErr, true
+}
+
 func addMetadataValue(e *TrogonError, visibility Visibility, key, value string) {
 	if len(e.metadata) == 0 {
 		e.metadata = make(Metadata)
