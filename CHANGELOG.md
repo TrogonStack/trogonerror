@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/TrogonStack/trogonerror/compare/v0.3.1...v0.4.0) (2025-10-22)
+
+
+### Features
+
+* Implement idiomatic error handling with As function ([#14](https://github.com/TrogonStack/trogonerror/issues/14)) ([4a43641](https://github.com/TrogonStack/trogonerror/commit/4a43641f48579e09f8ccbe2bf5a699ae47841557))
+
 ## [0.3.1](https://github.com/TrogonStack/trogonerror/compare/v0.3.0...v0.3.1) (2025-08-26)
 
 
