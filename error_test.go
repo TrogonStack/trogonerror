@@ -785,6 +785,138 @@ func (c CustomError) Error() string {
 	return c.msg
 }
 
+func TestAs(t *testing.T) {
+	t.Run("As returns TrogonError when error matches", func(t *testing.T) {
+		template := trogonerror.NewErrorTemplate("shopify.inventory", "INSUFFICIENT_INVENTORY",
+			trogonerror.TemplateWithCode(trogonerror.CodeFailedPrecondition))
+
+		originalErr := template.NewError(
+			trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "productId", "gid://shopify/Product/1234567890"))
+
+		trogonErr, ok := trogonerror.As(originalErr, template)
+		assert.True(t, ok)
+		assert.NotNil(t, trogonErr)
+		assert.Equal(t, "shopify.inventory", trogonErr.Domain())
+		assert.Equal(t, "INSUFFICIENT_INVENTORY", trogonErr.Reason())
+		assert.Equal(t, "gid://shopify/Product/1234567890", trogonErr.Metadata()["productId"].Value())
+
+	})
+
+	t.Run("As returns false when error doesn't match", func(t *testing.T) {
+		template1 := trogonerror.NewErrorTemplate("shopify.inventory", "INSUFFICIENT_INVENTORY")
+		template2 := trogonerror.NewErrorTemplate("shopify.users", "NOT_FOUND")
+
+		err1 := template1.NewError()
+
+		trogonErr, ok := trogonerror.As(err1, template2)
+		assert.False(t, ok)
+		assert.Nil(t, trogonErr)
+	})
+
+	t.Run("As returns false for non-TrogonError", func(t *testing.T) {
+		template := trogonerror.NewErrorTemplate("shopify.inventory", "INSUFFICIENT_INVENTORY")
+		regularErr := errors.New("regular error")
+
+		trogonErr, ok := trogonerror.As(regularErr, template)
+		assert.False(t, ok)
+		assert.Nil(t, trogonErr)
+	})
+
+	t.Run("As works with WithChanges pattern", func(t *testing.T) {
+		template := trogonerror.NewErrorTemplate("shopify.inventory", "INSUFFICIENT_INVENTORY",
+			trogonerror.TemplateWithCode(trogonerror.CodeResourceExhausted))
+
+		originalErr := template.NewError(
+			trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "productId", "gid://shopify/Product/1234567890"))
+
+		trogonErr, ok := trogonerror.As(originalErr, template)
+		assert.True(t, ok)
+		assert.NotNil(t, trogonErr)
+
+		modifiedErr := trogonErr.WithChanges(
+			trogonerror.WithChangeMetadataValue(trogonerror.VisibilityPublic, "main_order_id", "order_123"),
+			trogonerror.WithChangeMetadataValue(trogonerror.VisibilityPublic, "listing_count", "5"),
+		)
+
+		assert.Equal(t, "order_123", modifiedErr.Metadata()["main_order_id"].Value())
+		assert.Equal(t, "5", modifiedErr.Metadata()["listing_count"].Value())
+		assert.Equal(t, "gid://shopify/Product/1234567890", modifiedErr.Metadata()["productId"].Value()) // Original preserved
+	})
+
+	t.Run("As works with TrogonError directly", func(t *testing.T) {
+		originalErr := trogonerror.NewError("shopify.inventory", "INSUFFICIENT_INVENTORY",
+			trogonerror.WithCode(trogonerror.CodeFailedPrecondition),
+			trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "productId", "gid://shopify/Product/1234567890"))
+
+		// Test with TrogonError as target (not template)
+		trogonErr, ok := trogonerror.As(originalErr, originalErr)
+		assert.True(t, ok)
+		assert.NotNil(t, trogonErr)
+		assert.Equal(t, "shopify.inventory", trogonErr.Domain())
+		assert.Equal(t, "INSUFFICIENT_INVENTORY", trogonErr.Reason())
+	})
+
+	t.Run("As works with wrapped TrogonError", func(t *testing.T) {
+		template := trogonerror.NewErrorTemplate("shopify.inventory", "INSUFFICIENT_INVENTORY")
+
+		originalErr := template.NewError(
+			trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "productId", "gid://shopify/Product/1234567890"))
+
+		// Wrap the TrogonError with fmt.Errorf (this was the problematic scenario)
+		wrappedErr := fmt.Errorf("context: %w", originalErr)
+
+		// Test the As function with the wrapped error
+		trogonErr, ok := trogonerror.As(wrappedErr, template)
+		assert.True(t, ok, "As should return true for wrapped TrogonError")
+		assert.NotNil(t, trogonErr, "As should return non-nil TrogonError")
+
+		// Verify the extracted error has the correct properties
+		assert.Equal(t, "shopify.inventory", trogonErr.Domain())
+		assert.Equal(t, "INSUFFICIENT_INVENTORY", trogonErr.Reason())
+		assert.Equal(t, "gid://shopify/Product/1234567890", trogonErr.Metadata()["productId"].Value())
+	})
+
+}
+
+func TestInternalMethods(t *testing.T) {
+	t.Run("TrogonError.is method delegates to Is", func(t *testing.T) {
+		err1 := trogonerror.NewError("shopify.session", "SESSION_EXPIRED")
+		err2 := trogonerror.NewError("shopify.session", "SESSION_EXPIRED")
+		err3 := trogonerror.NewError("shopify.session", "SESSION_INVALID")
+
+		// Test the internal is method by using it in the As function
+		// This indirectly tests the is method since As calls target.is(err)
+		trogonErr, ok := trogonerror.As(err2, err1)
+		assert.True(t, ok)
+		assert.NotNil(t, trogonErr)
+
+		trogonErr2, ok2 := trogonerror.As(err3, err1)
+		assert.False(t, ok2)
+		assert.Nil(t, trogonErr2)
+	})
+
+	t.Run("ErrorTemplate.is method delegates to Is", func(t *testing.T) {
+		template := trogonerror.NewErrorTemplate("shopify.session", "SESSION_EXPIRED")
+		err1 := template.NewError()
+		err2 := trogonerror.NewError("shopify.session", "SESSION_EXPIRED")
+		err3 := trogonerror.NewError("shopify.session", "SESSION_INVALID")
+
+		// Test the internal is method by using it in the As function
+		// This indirectly tests the is method since As calls target.is(err)
+		trogonErr, ok := trogonerror.As(err1, template)
+		assert.True(t, ok)
+		assert.NotNil(t, trogonErr)
+
+		trogonErr2, ok2 := trogonerror.As(err2, template)
+		assert.True(t, ok2)
+		assert.NotNil(t, trogonErr2)
+
+		trogonErr3, ok3 := trogonerror.As(err3, template)
+		assert.False(t, ok3)
+		assert.Nil(t, trogonErr3)
+	})
+}
+
 func TestErrorTemplate(t *testing.T) {
 	t.Run("NewErrorTemplate creates template with defaults", func(t *testing.T) {
 		template := trogonerror.NewErrorTemplate("shopify.session", "SESSION_EXPIRED")

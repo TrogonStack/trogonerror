@@ -376,3 +376,37 @@ func ExampleWithMetadataValuef_formattedValues() {
 	// Amount: $299.99
 	// Request ID: req_1234567890_5432109876
 }
+
+func ExampleAs_idiomaticErrorHandling() {
+	// Define error templates (typically done at package level)
+	var ErrInsufficientStock = trogonerror.NewErrorTemplate("inventory", "INSUFFICIENT_STOCK",
+		trogonerror.TemplateWithCode(trogonerror.CodeResourceExhausted))
+
+	// Simulate an error from inventory service
+	inventoryErr := ErrInsufficientStock.NewError(
+		trogonerror.WithMetadataValue(trogonerror.VisibilityPublic, "product_id", "prod_12345"))
+
+	// Old verbose pattern:
+	// if inventory.ErrInsufficientStock.Is(err) {
+	//     var trogonErr *trogonerror.TrogonError
+	//     if errors.As(err, &trogonErr) {
+	//         return nil, trogonErr.WithChanges(...)
+	//     }
+	// }
+
+	// New idiomatic pattern using As:
+	if trogonErr, ok := trogonerror.As(inventoryErr, ErrInsufficientStock); ok {
+		modifiedErr := trogonErr.WithChanges(
+			trogonerror.WithChangeMetadataValue(trogonerror.VisibilityPublic, "order_id", "order_789"),
+			trogonerror.WithChangeMetadataValue(trogonerror.VisibilityPublic, "requested_quantity", "10"),
+		)
+		fmt.Printf("Modified error domain: %s\n", modifiedErr.Domain())
+		fmt.Printf("Order ID: %s\n", modifiedErr.Metadata()["order_id"].Value())
+		fmt.Printf("Requested quantity: %s\n", modifiedErr.Metadata()["requested_quantity"].Value())
+	}
+
+	// Output:
+	// Modified error domain: inventory
+	// Order ID: order_789
+	// Requested quantity: 10
+}
