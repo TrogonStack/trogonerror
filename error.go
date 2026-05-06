@@ -795,6 +795,8 @@ type ErrorTemplate struct {
 	message    string // empty string means use code's default message
 	visibility Visibility
 	help       *Help
+	metadata   Metadata
+	fields     []protoFieldSpec
 }
 
 // TemplateOption represents options that can be applied to ErrorTemplate
@@ -865,6 +867,9 @@ func (et *ErrorTemplate) NewError(options ...ErrorOption) *TrogonError {
 	}
 	if et.help != nil {
 		baseOptions = append(baseOptions, WithHelp(*et.help))
+	}
+	for key, value := range et.metadata {
+		baseOptions = append(baseOptions, WithMetadataValue(value.visibility, key, value.value))
 	}
 
 	return NewError(et.domain, et.reason, append(baseOptions, options...)...)
