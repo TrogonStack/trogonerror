@@ -1,0 +1,25 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/TrogonStack/trogonerror/internal/testdata/gen
+    - file_option: go_package
+      path: trogon/error/v1alpha1/code.proto
+      value: github.com/TrogonStack/trogonproto/gen/trogon/error/v1alpha1
+    - file_option: go_package
+      path: trogon/error/v1alpha1/options.proto
+      value: github.com/TrogonStack/trogonproto/gen/trogon/error/v1alpha1
+    - file_option: go_package
+      path: trogon/error/v1alpha1/visibility.proto
+      value: github.com/TrogonStack/trogonproto/gen/trogon/error/v1alpha1
+    - file_option: go_package
+      path: elixirpb.proto
+      value: buf.build/gen/go/elixir-protobuf/protobuf/protocolbuffers/go
+plugins:
+  - remote: buf.build/protocolbuffers/go:v1.36.5
+    out: internal/testdata/gen
+    opt:
+      - paths=source_relative
+inputs:
+  - directory: internal/testdata/proto

@@ -1,0 +1,6 @@
+version: v2
+modules:
+  - path: .
+deps:
+  - buf.build/trogonstack/trogon-proto
+  - buf.build/elixir-protobuf/protobuf
