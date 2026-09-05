@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.5.0](https://github.com/TrogonStack/trogonerror/compare/v0.4.0...v0.5.0) (2026-09-05)
+
+
+### Features
+
+* **errconnect:** Add connect-go error code mapping ([#25](https://github.com/TrogonStack/trogonerror/issues/25)) ([b17fb03](https://github.com/TrogonStack/trogonerror/commit/b17fb03ff9db4c61b1cbdd6b0096f4ddac61de80))
+
+
+### Bug Fixes
+
+* **release-please:** Match signoff identity to bot's actual GitHub name ([#27](https://github.com/TrogonStack/trogonerror/issues/27)) ([a904509](https://github.com/TrogonStack/trogonerror/commit/a904509d14762e07cc84b775270e7b605882c9c8))
+
 ## [0.4.0](https://github.com/TrogonStack/trogonerror/compare/v0.3.1...v0.4.0) (2025-10-22)
 
 
