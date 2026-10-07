@@ -91,7 +91,7 @@ type TrogonError struct {
 	domain           string
 	reason           string
 	metadata         Metadata
-	causes           []*TrogonError
+	causes           causes
 	visibility       Visibility
 	subject          string
 	id               string
@@ -187,12 +187,37 @@ func (e TrogonError) Is(target error) bool {
 	case TrogonError:
 		return e.domain == t.domain && e.reason == t.reason
 	default:
-		return errors.Is(e.wrappedErr, target)
+		return errors.Is(e.Unwrap(), target)
 	}
 }
 
 func (e TrogonError) Unwrap() error {
-	return e.wrappedErr
+	switch {
+	case len(e.causes) == 0:
+		return e.wrappedErr
+	case e.wrappedErr == nil:
+		return e.causes
+	default:
+		return errors.Join(e.wrappedErr, e.causes)
+	}
+}
+
+type causes []*TrogonError
+
+func (c causes) Error() string {
+	messages := make([]string, len(c))
+	for i, cause := range c {
+		messages[i] = cause.Error()
+	}
+	return strings.Join(messages, "\n")
+}
+
+func (c causes) Unwrap() []error {
+	errs := make([]error, len(c))
+	for i, cause := range c {
+		errs[i] = cause
+	}
+	return errs
 }
 
 func (c Code) Message() string {
@@ -339,7 +364,7 @@ func NewError(domain, reason string, options ...ErrorOption) *TrogonError {
 		domain:      domain,
 		reason:      reason,
 		metadata:    make(Metadata),
-		causes:      make([]*TrogonError, 0),
+		causes:      make(causes, 0),
 		visibility:  VisibilityInternal,
 	}
 
@@ -541,7 +566,11 @@ func WithRetryTime(retryTime time.Time) ErrorOption {
 // WithCause adds one or more causes to the error
 func WithCause(causes ...*TrogonError) ErrorOption {
 	return func(e *TrogonError) {
-		e.causes = append(e.causes, causes...)
+		for _, cause := range causes {
+			if cause != nil {
+				e.causes = append(e.causes, cause)
+			}
+		}
 	}
 }
 
@@ -584,7 +613,7 @@ func (e *TrogonError) copy() *TrogonError {
 	}
 
 	if len(e.causes) > 0 {
-		clonedErr.causes = make([]*TrogonError, len(e.causes))
+		clonedErr.causes = make(causes, len(e.causes))
 		copy(clonedErr.causes, e.causes)
 	}
 

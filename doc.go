@@ -180,7 +180,9 @@
 // # Standard Go Error Compatibility
 //
 // TrogonError implements the standard Go error interface and works with
-// errors.Is, errors.As, and error wrapping:
+// errors.Is, errors.As, and error wrapping. Both the error wrapped via
+// WithWrap and every cause added via WithCause are reachable, so errors.Is
+// and errors.As also match errors nested anywhere in the cause chain:
 //
 //	// Type assertion
 //	if tErr, ok := err.(*trogonerror.TrogonError); ok {
