@@ -1,14 +1,15 @@
-package trogonerror_test
+package errproto_test
 
 import (
 	"testing"
 
 	"github.com/TrogonStack/trogonerror"
+	"github.com/TrogonStack/trogonerror/errproto"
 	testdatav1 "github.com/TrogonStack/trogonerror/internal/testdata/gen/trogonerror/testdata/v1"
 	"github.com/stretchr/testify/assert"
 )
 
-var userNotFoundTemplate = trogonerror.NewErrorTemplateFromProto[*testdatav1.UserNotFound]()
+var userNotFoundTemplate = errproto.NewErrorTemplateFromProto[*testdatav1.UserNotFound]()
 
 func TestNewErrorTemplateFromProto_TemplateLevel(t *testing.T) {
 	err := userNotFoundTemplate.NewError()
@@ -83,7 +84,7 @@ func TestErrorTemplate_FromProto_OptionsOverride(t *testing.T) {
 }
 
 func TestNewErrorTemplateFromProto_TemplateOptionOverride(t *testing.T) {
-	template := trogonerror.NewErrorTemplateFromProto[*testdatav1.UserNotFound](
+	template := errproto.NewErrorTemplateFromProto[*testdatav1.UserNotFound](
 		trogonerror.TemplateWithMessage("custom message"),
 	)
 

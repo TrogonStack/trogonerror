@@ -796,7 +796,6 @@ type ErrorTemplate struct {
 	visibility Visibility
 	help       *Help
 	metadata   Metadata
-	fields     []protoFieldSpec
 }
 
 // TemplateOption represents options that can be applied to ErrorTemplate
@@ -853,6 +852,16 @@ func TemplateWithHelpLink(description, url string) TemplateOption {
 			description: description,
 			url:         url,
 		})
+	}
+}
+
+// TemplateWithMetadataValue sets a single metadata entry with specific visibility
+func TemplateWithMetadataValue(visibility Visibility, key, value string) TemplateOption {
+	return func(t *ErrorTemplate) {
+		if t.metadata == nil {
+			t.metadata = Metadata{}
+		}
+		t.metadata[key] = MetadataValue{value: value, visibility: visibility}
 	}
 }
 

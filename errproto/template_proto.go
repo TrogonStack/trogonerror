@@ -1,60 +1,64 @@
-package trogonerror
+// Package errproto derives trogonerror.ErrorTemplate values from proto
+// messages that carry the trogon.error.v1alpha1 Template and FieldOptions
+// message/field options, so services can declare their error contract once
+// in proto and pick it up in Go without hand-rewriting the same
+// domain/reason/code/visibility/help/metadata in two places.
+package errproto
 
 import (
 	"fmt"
 
+	"github.com/TrogonStack/trogonerror"
 	errpb "github.com/TrogonStack/trogonproto/gen/trogon/error/v1alpha1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 )
 
 type protoFieldSpec struct {
-	key            string
-	number         protoreflect.FieldNumber
-	visibility     Visibility
-	hasFixedValue  bool
-	fixedValue     string
-	hasDefault     bool
-	defaultValue   string
+	key           string
+	number        protoreflect.FieldNumber
+	visibility    trogonerror.Visibility
+	hasFixedValue bool
+	fixedValue    string
+	hasDefault    bool
+	defaultValue  string
 }
 
-// NewErrorTemplateFromProto builds an ErrorTemplate from a proto message type
+// Template wraps a trogonerror.ErrorTemplate with the proto field
+// specifications needed to derive per-instance metadata from a populated
+// proto message.
+type Template struct {
+	*trogonerror.ErrorTemplate
+	fields []protoFieldSpec
+}
+
+// NewErrorTemplateFromProto builds a Template from a proto message type
 // that carries the trogon.error.v1alpha1.Template message option.
 //
 // The descriptor is read once at template-construction time. Per-field
 // FieldOptions are cached so subsequent FromProto calls do not re-walk the
 // descriptor.
-func NewErrorTemplateFromProto[T proto.Message](options ...TemplateOption) *ErrorTemplate {
+func NewErrorTemplateFromProto[T proto.Message](options ...trogonerror.TemplateOption) *Template {
 	var zero T
 	desc := zero.ProtoReflect().Descriptor()
 
-	template := &ErrorTemplate{
-		code:       CodeUnknown,
-		visibility: VisibilityInternal,
-	}
+	var domain, reason string
+	var derived []trogonerror.TemplateOption
 
 	if msgOpts, ok := proto.GetExtension(desc.Options(), errpb.E_Message).(*errpb.MessageOptions); ok && msgOpts != nil {
-		applyProtoTemplate(template, msgOpts.GetTemplate())
+		domain, reason, derived = templateOptionsFromProto(msgOpts.GetTemplate())
 	}
 
-	template.fields = collectFieldSpecs(desc)
-	for _, spec := range template.fields {
+	fields := collectFieldSpecs(desc)
+	for _, spec := range fields {
 		if spec.hasFixedValue {
-			if template.metadata == nil {
-				template.metadata = Metadata{}
-			}
-			template.metadata[spec.key] = MetadataValue{
-				value:      spec.fixedValue,
-				visibility: spec.visibility,
-			}
+			derived = append(derived, trogonerror.TemplateWithMetadataValue(spec.visibility, spec.key, spec.fixedValue))
 		}
 	}
 
-	for _, option := range options {
-		option(template)
-	}
+	et := trogonerror.NewErrorTemplate(domain, reason, append(derived, options...)...)
 
-	return template
+	return &Template{ErrorTemplate: et, fields: fields}
 }
 
 // FromProto creates a new error instance, deriving metadata from the proto
@@ -67,11 +71,11 @@ func NewErrorTemplateFromProto[T proto.Message](options ...TemplateOption) *Erro
 //
 // Caller-supplied options apply last and override anything derived from the
 // proto instance.
-func (et *ErrorTemplate) FromProto(m proto.Message, options ...ErrorOption) *TrogonError {
-	derived := make([]ErrorOption, 0, len(et.fields))
+func (t *Template) FromProto(m proto.Message, options ...trogonerror.ErrorOption) *trogonerror.TrogonError {
+	derived := make([]trogonerror.ErrorOption, 0, len(t.fields))
 	reflected := m.ProtoReflect()
 
-	for _, spec := range et.fields {
+	for _, spec := range t.fields {
 		if spec.hasFixedValue {
 			continue
 		}
@@ -89,52 +93,40 @@ func (et *ErrorTemplate) FromProto(m proto.Message, options ...ErrorOption) *Tro
 			continue
 		}
 
-		derived = append(derived, WithMetadataValue(spec.visibility, spec.key, value))
+		derived = append(derived, trogonerror.WithMetadataValue(spec.visibility, spec.key, value))
 	}
 
-	return et.NewError(append(derived, options...)...)
+	return t.NewError(append(derived, options...)...)
 }
 
-func applyProtoTemplate(template *ErrorTemplate, t *errpb.MessageOptions_Template) {
+func templateOptionsFromProto(t *errpb.MessageOptions_Template) (domain, reason string, opts []trogonerror.TemplateOption) {
 	if t == nil {
-		return
+		return "", "", nil
 	}
-	if d := t.GetDomain(); d != "" {
-		template.domain = d
-	}
-	if r := t.GetReason(); r != "" {
-		template.reason = r
-	}
+
+	domain = t.GetDomain()
+	reason = t.GetReason()
+
 	if m := t.GetMessage(); m != "" {
-		template.message = m
+		opts = append(opts, trogonerror.TemplateWithMessage(m))
 	}
 	if c := t.GetCode(); c != errpb.Code_UNSPECIFIED {
-		template.code = mapProtoCode(c)
+		opts = append(opts, trogonerror.TemplateWithCode(mapProtoCode(c)))
 	}
 	if v := t.GetVisibility(); v != errpb.Visibility_VISIBILITY_UNSPECIFIED {
-		template.visibility = mapProtoVisibility(v)
+		opts = append(opts, trogonerror.TemplateWithVisibility(mapProtoVisibility(v)))
 	}
 	for _, link := range t.GetHelpLinks() {
-		if template.help == nil {
-			template.help = &Help{}
-		}
-		template.help.links = append(template.help.links, HelpLink{
-			description: link.GetDescription(),
-			url:         link.GetUrl(),
-		})
+		opts = append(opts, trogonerror.TemplateWithHelpLink(link.GetDescription(), link.GetUrl()))
 	}
 	for _, entry := range t.GetMetadata() {
 		if entry.GetKey() == "" {
 			continue
 		}
-		if template.metadata == nil {
-			template.metadata = Metadata{}
-		}
-		template.metadata[entry.GetKey()] = MetadataValue{
-			value:      entry.GetValue(),
-			visibility: mapProtoVisibility(entry.GetVisibility()),
-		}
+		opts = append(opts, trogonerror.TemplateWithMetadataValue(mapProtoVisibility(entry.GetVisibility()), entry.GetKey(), entry.GetValue()))
 	}
+
+	return domain, reason, opts
 }
 
 func collectFieldSpecs(desc protoreflect.MessageDescriptor) []protoFieldSpec {
@@ -182,52 +174,52 @@ func protoFieldString(m protoreflect.Message, field protoreflect.FieldDescriptor
 	}
 }
 
-func mapProtoCode(c errpb.Code) Code {
+func mapProtoCode(c errpb.Code) trogonerror.Code {
 	switch c {
 	case errpb.Code_CANCELLED:
-		return CodeCancelled
+		return trogonerror.CodeCancelled
 	case errpb.Code_UNKNOWN:
-		return CodeUnknown
+		return trogonerror.CodeUnknown
 	case errpb.Code_INVALID_ARGUMENT:
-		return CodeInvalidArgument
+		return trogonerror.CodeInvalidArgument
 	case errpb.Code_DEADLINE_EXCEEDED:
-		return CodeDeadlineExceeded
+		return trogonerror.CodeDeadlineExceeded
 	case errpb.Code_NOT_FOUND:
-		return CodeNotFound
+		return trogonerror.CodeNotFound
 	case errpb.Code_ALREADY_EXISTS:
-		return CodeAlreadyExists
+		return trogonerror.CodeAlreadyExists
 	case errpb.Code_PERMISSION_DENIED:
-		return CodePermissionDenied
+		return trogonerror.CodePermissionDenied
 	case errpb.Code_RESOURCE_EXHAUSTED:
-		return CodeResourceExhausted
+		return trogonerror.CodeResourceExhausted
 	case errpb.Code_FAILED_PRECONDITION:
-		return CodeFailedPrecondition
+		return trogonerror.CodeFailedPrecondition
 	case errpb.Code_ABORTED:
-		return CodeAborted
+		return trogonerror.CodeAborted
 	case errpb.Code_OUT_OF_RANGE:
-		return CodeOutOfRange
+		return trogonerror.CodeOutOfRange
 	case errpb.Code_UNIMPLEMENTED:
-		return CodeUnimplemented
+		return trogonerror.CodeUnimplemented
 	case errpb.Code_INTERNAL:
-		return CodeInternal
+		return trogonerror.CodeInternal
 	case errpb.Code_UNAVAILABLE:
-		return CodeUnavailable
+		return trogonerror.CodeUnavailable
 	case errpb.Code_DATA_LOSS:
-		return CodeDataLoss
+		return trogonerror.CodeDataLoss
 	case errpb.Code_UNAUTHENTICATED:
-		return CodeUnauthenticated
+		return trogonerror.CodeUnauthenticated
 	default:
-		return CodeUnknown
+		return trogonerror.CodeUnknown
 	}
 }
 
-func mapProtoVisibility(v errpb.Visibility) Visibility {
+func mapProtoVisibility(v errpb.Visibility) trogonerror.Visibility {
 	switch v {
 	case errpb.Visibility_VISIBILITY_PUBLIC:
-		return VisibilityPublic
+		return trogonerror.VisibilityPublic
 	case errpb.Visibility_VISIBILITY_PRIVATE:
-		return VisibilityPrivate
+		return trogonerror.VisibilityPrivate
 	default:
-		return VisibilityInternal
+		return trogonerror.VisibilityInternal
 	}
 }
