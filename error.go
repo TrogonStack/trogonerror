@@ -566,7 +566,11 @@ func WithRetryTime(retryTime time.Time) ErrorOption {
 // WithCause adds one or more causes to the error
 func WithCause(causes ...*TrogonError) ErrorOption {
 	return func(e *TrogonError) {
-		e.causes = append(e.causes, causes...)
+		for _, cause := range causes {
+			if cause != nil {
+				e.causes = append(e.causes, cause)
+			}
+		}
 	}
 }
 

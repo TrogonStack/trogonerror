@@ -1092,3 +1092,22 @@ func TestTrogonErrorIsDirectCall(t *testing.T) {
 	assert.True(t, outer.Is(sentinel))
 	assert.False(t, outer.Is(errors.New("other")))
 }
+
+func TestWithCauseIgnoresNil(t *testing.T) {
+	sentinel := errors.New("sentinel error")
+	cause := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT",
+		trogonerror.WithWrap(sentinel))
+
+	outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+		trogonerror.WithCause(nil, cause, nil))
+
+	assert.Len(t, outer.Causes(), 1)
+	assert.True(t, errors.Is(outer, sentinel))
+	assert.False(t, errors.Is(outer, errors.New("other")))
+	assert.NotPanics(t, func() { _ = outer.Unwrap().Error() })
+
+	onlyNil := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+		trogonerror.WithCause(nil))
+	assert.Empty(t, onlyNil.Causes())
+	assert.Nil(t, onlyNil.Unwrap())
+}
