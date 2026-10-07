@@ -971,3 +971,113 @@ func TestErrorTemplate(t *testing.T) {
 		assert.Len(t, err.Help().Links(), 1)
 	})
 }
+
+func TestTrogonErrorCauseTraversal(t *testing.T) {
+	t.Run("errors.Is finds a TrogonError cause", func(t *testing.T) {
+		inner := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT")
+		innerSentinel := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT")
+		unrelated := trogonerror.NewError("shopify.network", "NETWORK_UNAVAILABLE")
+
+		outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+			trogonerror.WithCause(inner))
+
+		assert.True(t, errors.Is(outer, innerSentinel))
+		assert.False(t, errors.Is(outer, unrelated))
+	})
+
+	t.Run("errors.Is finds a nested cause", func(t *testing.T) {
+		leaf := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT")
+		leafSentinel := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT")
+
+		middle := trogonerror.NewError("shopify.network", "NETWORK_UNAVAILABLE",
+			trogonerror.WithCause(leaf))
+
+		outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+			trogonerror.WithCause(middle))
+
+		assert.True(t, errors.Is(outer, leafSentinel))
+	})
+
+	t.Run("errors.Is finds a standard sentinel error wrapped inside a cause", func(t *testing.T) {
+		sentinel := errors.New("sentinel error")
+
+		inner := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT",
+			trogonerror.WithWrap(sentinel))
+
+		outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+			trogonerror.WithCause(inner))
+
+		assert.True(t, errors.Is(outer, sentinel))
+	})
+
+	t.Run("errors.Is still finds the directly wrapped error alongside causes", func(t *testing.T) {
+		sentinel := errors.New("sentinel error")
+		cause := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT")
+
+		outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+			trogonerror.WithWrap(sentinel),
+			trogonerror.WithCause(cause))
+
+		assert.True(t, errors.Is(outer, sentinel))
+	})
+
+	t.Run("errors.Is still finds the directly wrapped error without causes", func(t *testing.T) {
+		sentinel := errors.New("sentinel error")
+
+		outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+			trogonerror.WithWrap(sentinel))
+
+		assert.True(t, errors.Is(outer, sentinel))
+	})
+
+	t.Run("errors.As finds a custom error type stored inside a cause's wrapped error", func(t *testing.T) {
+		custom := CustomError{msg: "custom error"}
+
+		cause := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT",
+			trogonerror.WithWrap(custom))
+
+		outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+			trogonerror.WithCause(cause))
+
+		var target CustomError
+		assert.True(t, errors.As(outer, &target))
+		assert.Equal(t, custom, target)
+	})
+
+	t.Run("errors.As returns the outer error, not a cause, when the outer is a TrogonError", func(t *testing.T) {
+		cause := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT")
+
+		outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+			trogonerror.WithCause(cause))
+
+		var target *trogonerror.TrogonError
+		assert.True(t, errors.As(outer, &target))
+		assert.Equal(t, "shopify.payments", target.Domain())
+		assert.Equal(t, "PAYMENT_DECLINED", target.Reason())
+	})
+
+	t.Run("Unwrap returns exactly wrappedErr when there are no causes", func(t *testing.T) {
+		sentinel := errors.New("sentinel error")
+
+		outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+			trogonerror.WithWrap(sentinel))
+
+		assert.True(t, outer.Unwrap() == sentinel)
+	})
+
+	t.Run("Unwrap returns nil when neither wrappedErr nor causes are set", func(t *testing.T) {
+		outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED")
+
+		assert.Nil(t, outer.Unwrap())
+	})
+
+	t.Run("An outer error does not match errors.Is for an unrelated TrogonError", func(t *testing.T) {
+		cause := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT")
+		unrelated := trogonerror.NewError("shopify.unrelated", "UNRELATED_REASON")
+
+		outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+			trogonerror.WithCause(cause))
+
+		assert.False(t, errors.Is(outer, unrelated))
+	})
+}
