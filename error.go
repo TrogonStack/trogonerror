@@ -187,7 +187,7 @@ func (e TrogonError) Is(target error) bool {
 	case TrogonError:
 		return e.domain == t.domain && e.reason == t.reason
 	default:
-		return false
+		return errors.Is(e.Unwrap(), target)
 	}
 }
 

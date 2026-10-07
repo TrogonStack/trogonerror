@@ -1081,3 +1081,14 @@ func TestTrogonErrorCauseTraversal(t *testing.T) {
 		assert.False(t, errors.Is(outer, unrelated))
 	})
 }
+
+func TestTrogonErrorIsDirectCall(t *testing.T) {
+	sentinel := errors.New("sentinel error")
+	cause := trogonerror.NewError("shopify.database", "CONNECTION_TIMEOUT",
+		trogonerror.WithWrap(sentinel))
+	outer := trogonerror.NewError("shopify.payments", "PAYMENT_DECLINED",
+		trogonerror.WithCause(cause))
+
+	assert.True(t, outer.Is(sentinel))
+	assert.False(t, outer.Is(errors.New("other")))
+}
