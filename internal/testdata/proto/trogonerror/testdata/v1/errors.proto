@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package trogonerror.testdata.v1;
+
+import "trogon/error/v1alpha1/code.proto";
+import "trogon/error/v1alpha1/options.proto";
+import "trogon/error/v1alpha1/visibility.proto";
+
+message UserNotFound {
+  option (trogon.error.v1alpha1.message).template = {
+    domain: "shopify.users",
+    reason: "USER_NOT_FOUND",
+    message: "User does not exist.",
+    code: NOT_FOUND,
+    visibility: VISIBILITY_PUBLIC,
+    help_links: [{url: "https://docs.shopify.com/users", description: "User Docs"}],
+    metadata: [
+      {key: "component", value: "users", visibility: VISIBILITY_PUBLIC},
+      {key: "team", value: "platform-identity", visibility: VISIBILITY_INTERNAL}
+    ]
+  };
+
+  string user_id = 1 [(trogon.error.v1alpha1.field) = {
+    visibility: VISIBILITY_PUBLIC
+  }];
+  string tenant_id = 2 [(trogon.error.v1alpha1.field) = {
+    visibility: VISIBILITY_PUBLIC,
+    default_value: "default-tenant"
+  }];
+  string region = 3 [(trogon.error.v1alpha1.field) = {
+    visibility: VISIBILITY_PUBLIC,
+    value: "us-east-1"
+  }];
+}

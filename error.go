@@ -795,6 +795,7 @@ type ErrorTemplate struct {
 	message    string // empty string means use code's default message
 	visibility Visibility
 	help       *Help
+	metadata   Metadata
 }
 
 // TemplateOption represents options that can be applied to ErrorTemplate
@@ -854,6 +855,16 @@ func TemplateWithHelpLink(description, url string) TemplateOption {
 	}
 }
 
+// TemplateWithMetadataValue sets a single metadata entry with specific visibility
+func TemplateWithMetadataValue(visibility Visibility, key, value string) TemplateOption {
+	return func(t *ErrorTemplate) {
+		if t.metadata == nil {
+			t.metadata = Metadata{}
+		}
+		t.metadata[key] = MetadataValue{value: value, visibility: visibility}
+	}
+}
+
 // NewError creates a new error instance from the template
 func (et *ErrorTemplate) NewError(options ...ErrorOption) *TrogonError {
 	baseOptions := []ErrorOption{
@@ -865,6 +876,9 @@ func (et *ErrorTemplate) NewError(options ...ErrorOption) *TrogonError {
 	}
 	if et.help != nil {
 		baseOptions = append(baseOptions, WithHelp(*et.help))
+	}
+	for key, value := range et.metadata {
+		baseOptions = append(baseOptions, WithMetadataValue(value.visibility, key, value.value))
 	}
 
 	return NewError(et.domain, et.reason, append(baseOptions, options...)...)

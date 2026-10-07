@@ -1,0 +1,16 @@
+version: v2
+managed:
+  enabled: true
+  override:
+    - file_option: go_package_prefix
+      value: github.com/TrogonStack/trogonerror/internal/testdata/gen
+    - file_option: go_package_prefix
+      module: buf.build/trogonstack/trogon-proto
+      value: github.com/TrogonStack/trogonproto/gen
+plugins:
+  - remote: buf.build/protocolbuffers/go:v1.36.5
+    out: internal/testdata/gen
+    opt:
+      - paths=source_relative
+inputs:
+  - directory: internal/testdata/proto

@@ -12,12 +12,30 @@ permissions:
   pull-requests: read
 
 jobs:
+  generated-code-up-to-date:
+    name: Generated Code Up-To-Date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5.0.0
+      - uses: bufbuild/buf-setup-action@v1.50.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Regenerate Go bindings
+        run: buf generate
+      - name: Verify clean working tree
+        run: |
+          if ! git diff --quiet --exit-code; then
+            echo "Generated code is out of date. Run 'buf generate' and commit the result."
+            git diff
+            exit 1
+          fi
+
   quality-assurance:
     name: Quality Assurance
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        go-version: [1.24.x]
+        go-version: [1.26.x]
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
