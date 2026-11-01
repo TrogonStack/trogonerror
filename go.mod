@@ -1,9 +1,9 @@
 module github.com/TrogonStack/trogonerror
 
-go 1.25.0
+go 1.26.0
 
 require (
-	connectrpc.com/connect v1.21.0
+	connectrpc.com/connect v1.21.1
 	github.com/stretchr/testify v1.12.1
 )
 
